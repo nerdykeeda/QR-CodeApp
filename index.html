@@ -7,6 +7,17 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script>
+        // Fallback QR code library loader
+        if (typeof QRCode === 'undefined') {
+            console.log('Loading QRCode library fallback...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+            script.onload = () => console.log('QRCode library loaded successfully');
+            script.onerror = () => console.error('Failed to load QRCode library from fallback');
+            document.head.appendChild(script);
+        }
+    </script>
 </head>
 <body>
     <div class="container">

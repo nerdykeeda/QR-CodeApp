@@ -6,6 +6,19 @@
     <title>VCard QR Generator - Digital Visiting Card</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script>
+        // Fallback QR code library loader
+        window.addEventListener('load', function() {
+            if (typeof QRCode === 'undefined') {
+                console.log('Loading QRCode library fallback...');
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+                script.onload = () => console.log('QRCode library loaded successfully');
+                script.onerror = () => console.error('Failed to load QRCode library from fallback');
+                document.head.appendChild(script);
+            }
+        });
+    </script>
     <style>
 * {
     margin: 0;
@@ -758,49 +771,58 @@ class VCardGenerator {
     generateVCardData(data) {
         const fullName = `${data.firstName} ${data.lastName}`.trim();
         
-        let vcard = 'BEGIN:VCARD\n';
-        vcard += 'VERSION:3.0\n';
-        vcard += `FN:${fullName}\n`;
-        vcard += `N:${data.lastName};${data.firstName};;;\n`;
+        // Helper function to escape vCard special characters
+        const escapeVCardText = (text) => {
+            if (!text) return '';
+            return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
+        };
+        
+        let vcard = 'BEGIN:VCARD\r\n';
+        vcard += 'VERSION:3.0\r\n';
+        vcard += `FN:${escapeVCardText(fullName)}\r\n`;
+        vcard += `N:${escapeVCardText(data.lastName)};${escapeVCardText(data.firstName)};;;\r\n`;
         
         if (data.jobTitle) {
-            vcard += `TITLE:${data.jobTitle}\n`;
+            vcard += `TITLE:${escapeVCardText(data.jobTitle)}\r\n`;
         }
         
         if (data.company) {
-            vcard += `ORG:${data.company}\n`;
+            vcard += `ORG:${escapeVCardText(data.company)}\r\n`;
         }
         
         if (data.mobile) {
-            vcard += `TEL;TYPE=CELL:${data.mobile}\n`;
+            vcard += `TEL;TYPE=CELL:${escapeVCardText(data.mobile)}\r\n`;
         }
         
         if (data.email) {
-            vcard += `EMAIL:${data.email}\n`;
+            vcard += `EMAIL:${escapeVCardText(data.email)}\r\n`;
         }
         
         if (data.website) {
-            vcard += `URL:${data.website}\n`;
+            vcard += `URL:${escapeVCardText(data.website)}\r\n`;
         }
         
         if (data.address) {
-            vcard += `ADR:;;${data.address};;;;\n`;
+            vcard += `ADR:;;${escapeVCardText(data.address)};;;;\r\n`;
         }
 
-        if (data.linkedin) vcard += `URL:${data.linkedin}\n`;
-        if (data.twitter) vcard += `URL:${data.twitter}\n`;
-        if (data.facebook) vcard += `URL:${data.facebook}\n`;
-        if (data.instagram) vcard += `URL:${data.instagram}\n`;
-        if (data.github) vcard += `URL:${data.github}\n`;
-        if (data.youtube) vcard += `URL:${data.youtube}\n`;
+        // Add social media as URLs (limit to avoid QR code size issues)
+        const socialUrls = [];
+        if (data.linkedin) socialUrls.push(data.linkedin);
+        if (data.twitter) socialUrls.push(data.twitter);
+        if (data.facebook) socialUrls.push(data.facebook);
+        if (data.instagram) socialUrls.push(data.instagram);
+        if (data.github) socialUrls.push(data.github);
+        if (data.youtube) socialUrls.push(data.youtube);
         
-        if (data.profileImage) {
-            const base64Data = data.profileImage.split(',')[1];
-            vcard += `PHOTO;ENCODING=BASE64;TYPE=JPEG:${base64Data}\n`;
-        }
+        // Limit to first 3 social media links to keep QR code size manageable
+        socialUrls.slice(0, 3).forEach(url => {
+            vcard += `URL:${escapeVCardText(url)}\r\n`;
+        });
         
         vcard += 'END:VCARD';
         
+        console.log('Generated vCard:', vcard);
         return vcard;
     }
 
@@ -831,7 +853,17 @@ class VCardGenerator {
             
         } catch (error) {
             console.error('Error generating QR code:', error);
-            alert('Error generating QR code. Please try again.');
+            let errorMessage = 'Error generating QR code. ';
+            
+            if (error.message.includes('QRCode library not loaded')) {
+                errorMessage += 'Please check your internet connection and refresh the page.';
+            } else if (error.message.includes('canvas element not found')) {
+                errorMessage += 'UI error detected. Please refresh the page.';
+            } else {
+                errorMessage += 'Please try again. If the problem persists, try with shorter text or without special characters.';
+            }
+            
+            alert(errorMessage);
         } finally {
             generateBtn.innerHTML = originalHTML;
             generateBtn.disabled = false;
@@ -840,24 +872,43 @@ class VCardGenerator {
 
     generateQRCode(vCardData) {
         return new Promise((resolve, reject) => {
+            // Check if QRCode library is loaded
+            if (typeof QRCode === 'undefined') {
+                reject(new Error('QRCode library not loaded. Please check your internet connection.'));
+                return;
+            }
+
             const canvas = document.getElementById('qrcode');
+            if (!canvas) {
+                reject(new Error('QR code canvas element not found'));
+                return;
+            }
+
+            console.log('Generating QR code with vCard data:', vCardData);
             
-            QRCode.toCanvas(canvas, vCardData, {
-                width: 300,
-                height: 300,
-                margin: 2,
-                color: {
-                    dark: '#000000',
-                    light: '#FFFFFF'
-                },
-                errorCorrectionLevel: 'M'
-            }, (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
+            try {
+                QRCode.toCanvas(canvas, vCardData, {
+                    width: 300,
+                    height: 300,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    },
+                    errorCorrectionLevel: 'M'
+                }, (error) => {
+                    if (error) {
+                        console.error('QRCode.toCanvas error:', error);
+                        reject(error);
+                    } else {
+                        console.log('QR code generated successfully');
+                        resolve();
+                    }
+                });
+            } catch (syncError) {
+                console.error('Synchronous error in QR code generation:', syncError);
+                reject(syncError);
+            }
         });
     }
 
