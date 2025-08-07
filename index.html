@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCard QR Generator - Digital Visiting Card</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-qrcode"></i> VCard QR Generator</h1>
+            <p>Create your digital visiting card with QR code</p>
+        </header>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2>Personal Information</h2>
+                <form id="vcardForm" class="vcard-form">
+                    <!-- Profile Picture Upload -->
+                    <div class="form-group profile-upload">
+                        <label for="profilePicture">Profile Picture</label>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-camera"></i>
+                                <p>Click to upload profile picture</p>
+                                <span>JPG, PNG, GIF up to 5MB</span>
+                            </div>
+                            <img id="profilePreview" class="profile-preview" style="display: none;" />
+                            <input type="file" id="profilePicture" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobTitle">Job Title</label>
+                            <input type="text" id="jobTitle" placeholder="e.g., Software Engineer">
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Company</label>
+                            <input type="text" id="company" placeholder="e.g., Tech Corp">
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mobile">Mobile Number *</label>
+                            <input type="tel" id="mobile" required placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" required placeholder="john@example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website" placeholder="https://www.example.com">
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" rows="3" placeholder="Street, City, State, ZIP Code"></textarea>
+                    </div>
+
+                    <!-- Social Media Links -->
+                    <h3><i class="fas fa-share-alt"></i> Social Media Links</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="linkedin"><i class="fab fa-linkedin"></i> LinkedIn</label>
+                            <input type="url" id="linkedin" placeholder="https://linkedin.com/in/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="twitter"><i class="fab fa-twitter"></i> Twitter</label>
+                            <input type="url" id="twitter" placeholder="https://twitter.com/username">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="facebook"><i class="fab fa-facebook"></i> Facebook</label>
+                            <input type="url" id="facebook" placeholder="https://facebook.com/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="instagram"><i class="fab fa-instagram"></i> Instagram</label>
+                            <input type="url" id="instagram" placeholder="https://instagram.com/username">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="github"><i class="fab fa-github"></i> GitHub</label>
+                            <input type="url" id="github" placeholder="https://github.com/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="youtube"><i class="fab fa-youtube"></i> YouTube</label>
+                            <input type="url" id="youtube" placeholder="https://youtube.com/c/channel">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="generate-btn">
+                        <i class="fas fa-qrcode"></i> Generate QR Code
+                    </button>
+                </form>
+            </div>
+
+            <div class="preview-section">
+                <div class="card-preview" id="cardPreview">
+                    <h3>Preview</h3>
+                    <p>Fill the form to see your visiting card preview</p>
+                </div>
+
+                <div class="qr-section" id="qrSection" style="display: none;">
+                    <h3>Your QR Code</h3>
+                    <div class="qr-container">
+                        <canvas id="qrcode"></canvas>
+                    </div>
+                    <div class="qr-actions">
+                        <button id="downloadQR" class="download-btn">
+                            <i class="fas fa-download"></i> Download QR Code
+                        </button>
+                        <button id="downloadVCard" class="download-btn secondary">
+                            <i class="fas fa-address-card"></i> Download vCard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
