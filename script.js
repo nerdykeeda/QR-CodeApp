@@ -311,33 +311,30 @@ class VCardGenerator {
                 return;
             }
 
-            const canvas = document.getElementById('qrcode');
-            if (!canvas) {
-                reject(new Error('QR code canvas element not found'));
+            const qrContainer = document.getElementById('qrcode');
+            if (!qrContainer) {
+                reject(new Error('QR code container element not found'));
                 return;
             }
 
             console.log('Generating QR code with vCard data:', vCardData);
             
             try {
-                QRCode.toCanvas(canvas, vCardData, {
+                // Clear any existing QR code
+                qrContainer.innerHTML = '';
+                
+                // Create QR code using the embedded library
+                const qr = new QRCode(qrContainer, {
+                    text: vCardData,
                     width: 300,
                     height: 300,
-                    margin: 2,
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    },
-                    errorCorrectionLevel: 'M'
-                }, (error) => {
-                    if (error) {
-                        console.error('QRCode.toCanvas error:', error);
-                        reject(error);
-                    } else {
-                        console.log('QR code generated successfully');
-                        resolve();
-                    }
+                    colorDark: '#000000',
+                    colorLight: '#FFFFFF',
+                    correctLevel: QRCode.CorrectLevel.M
                 });
+                
+                console.log('QR code generated successfully');
+                resolve();
             } catch (syncError) {
                 console.error('Synchronous error in QR code generation:', syncError);
                 reject(syncError);
