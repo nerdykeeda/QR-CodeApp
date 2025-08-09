@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius - Redirecting...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 50px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+        }
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: rgba(255,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ff4444;
+        }
+        .success {
+            background: rgba(0,255,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #44ff44;
+        }
+        .btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔗 LinQrius</div>
+        <h2>URL Redirector</h2>
+        
+        <div id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Redirecting you to the original URL...</p>
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            <h3>⚠️ Link Not Found</h3>
+            <p>This shortened link doesn't exist or has expired.</p>
+            <p><strong>Short Code:</strong> <span id="shortCode"></span></p>
+        </div>
+        
+        <div id="success" class="success" style="display: none;">
+            <h3>✅ Redirecting...</h3>
+            <p>Taking you to: <span id="originalUrl"></span></p>
+            <p>If you're not redirected automatically, <a href="#" id="manualLink" class="btn">click here</a></p>
+        </div>
+        
+        <div>
+            <a href="index.html" class="btn">🏠 Go to LinQrius Home</a>
+            <a href="link-shorten.html" class="btn">🔗 Create Short Link</a>
+        </div>
+    </div>
+
+    <script>
+        // Extract short code from URL
+        function getShortCodeFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('code') || window.location.hash.substring(1);
+        }
+
+        // Load shortened links from localStorage
+        function loadLinks() {
+            const saved = localStorage.getItem('linq_shortened_links');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        // Find and redirect to original URL
+        function redirectToOriginal() {
+            const shortCode = getShortCodeFromURL();
+            
+            if (!shortCode) {
+                showError('No short code provided');
+                return;
+            }
+            
+            document.getElementById('shortCode').textContent = shortCode;
+            
+            const links = loadLinks();
+            const link = links.find(l => l.shortCode === shortCode);
+            
+            if (!link) {
+                showError(`Short code "${shortCode}" not found`);
+                return;
+            }
+            
+            // Update click count
+            link.clicks++;
+            localStorage.setItem('linq_shortened_links', JSON.stringify(links));
+            
+            // Show success and redirect
+            showSuccess(link.originalUrl);
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = link.originalUrl;
+            }, 2000);
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function showSuccess(originalUrl) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('originalUrl').textContent = originalUrl;
+            document.getElementById('manualLink').href = originalUrl;
+        }
+
+        // Check if we're redirecting
+        window.addEventListener('DOMContentLoaded', () => {
+            const shortCode = getShortCodeFromURL();
+            if (shortCode) {
+                document.getElementById('loading').style.display = 'block';
+                setTimeout(redirectToOriginal, 1000); // Small delay for UX
+            } else {
+                showError('No short code provided in URL');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -205,13 +205,16 @@
 
                 // Generate short code with LinQ format
                 const shortCode = customAlias || this.generateShortCode();
-                const shortUrl = `LinQ/${shortCode}`;
+                const baseUrl = window.location.origin + window.location.pathname.replace('link-shorten.html', '');
+                const shortUrl = `${baseUrl}redirect.html?code=${shortCode}`;
+                const displayUrl = `LinQ/${shortCode}`;
                 
                 // Create link object
                 const linkObj = {
                     id: Date.now(),
                     originalUrl: longUrl,
                     shortUrl: shortUrl,
+                    displayUrl: displayUrl,
                     shortCode: shortCode,
                     createdAt: new Date().toLocaleDateString(),
                     clicks: 0
@@ -255,8 +258,12 @@
                                 <a href="${link.originalUrl}" target="_blank">${link.originalUrl}</a>
                             </div>
                             <div class="shortened-url">
-                                <strong>Shortened:</strong> 
-                                <a href="#" onclick="linkShortener.redirectToOriginal('${link.originalUrl}')" class="short-url">${link.shortUrl}</a>
+                                <strong>Display:</strong> 
+                                <span class="short-url-display">${link.displayUrl || link.shortUrl}</span>
+                            </div>
+                            <div class="full-url">
+                                <strong>Full URL:</strong> 
+                                <a href="${link.shortUrl}" target="_blank" class="short-url">${link.shortUrl}</a>
                             </div>
                             <div class="link-meta">
                                 <span><i class="fas fa-calendar"></i> ${link.createdAt}</span>
@@ -268,7 +275,7 @@
                                 <i class="fas fa-external-link-alt"></i> Test Link
                             </button>
                             <button onclick="linkShortener.copyToClipboard('${link.shortUrl}')" class="action-btn">
-                                <i class="fas fa-copy"></i> Copy
+                                <i class="fas fa-copy"></i> Copy Full URL
                             </button>
                             <button onclick="linkShortener.generateQR('${link.shortUrl}')" class="action-btn">
                                 <i class="fas fa-qrcode"></i> QR Code
@@ -472,12 +479,27 @@
             text-decoration: none;
             cursor: pointer;
             transition: all 0.3s ease;
+            word-break: break-all;
         }
 
         .short-url:hover {
             background: #edf2f7;
             color: #4c51bf;
             text-decoration: underline;
+        }
+
+        .short-url-display {
+            background: #e3f2fd;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            color: #1976d2;
+            font-weight: bold;
+        }
+
+        .full-url {
+            margin-top: 8px;
+            font-size: 0.9em;
         }
 
         .link-meta {
