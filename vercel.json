@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server-simple.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server-simple.js"
+    },
+    {
+      "src": "/r/(.*)",
+      "dest": "/server-simple.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/server-simple.js"
+    },
+    {
+      "src": "/(.*\\.(html|css|js|png|jpg|jpeg|svg|ico|json))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "functions": {
+    "server-simple.js": {
+      "maxDuration": 10
+    }
+  }
+}
