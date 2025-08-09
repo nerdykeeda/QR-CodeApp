@@ -1,9 +1,15 @@
 {
   "version": 2,
+  "buildCommand": "echo 'Static build complete'",
+  "outputDirectory": ".",
   "builds": [
     {
       "src": "server-simple.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "**/*.{html,css,js,png,jpg,jpeg,svg,ico,json}",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
