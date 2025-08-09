@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 
@@ -11,58 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.')); // Serve static files
 
-// MongoDB connection - Update this with your Atlas connection string
+// In-memory storage (for testing - will reset when server restarts)
+let links = [];
+let nextId = 1;
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://spvinodmandan:<Kabira@15#>@cluster0.dvqra8e.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
-
-// Mongoose connection using the same URI
-const MONGODB_URI = uri.replace('/?retryWrites', '/linqrius?retryWrites');
-
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(() => {
-    console.log('Connected to MongoDB');
-}).catch((error) => {
-    console.error('MongoDB connection error:', error);
-});
-
-// Link Schema
-const linkSchema = new mongoose.Schema({
-    shortCode: { type: String, required: true, unique: true },
-    originalUrl: { type: String, required: true },
-    displayUrl: { type: String, required: true },
-    clicks: { type: Number, default: 0 },
-    createdAt: { type: Date, default: Date.now },
-    createdBy: { type: String, default: 'anonymous' },
-    isActive: { type: Boolean, default: true }
-});
-
-const Link = mongoose.model('Link', linkSchema);
+console.log('🚀 LinQrius server starting with in-memory storage...');
 
 // API Routes
 
@@ -80,12 +32,12 @@ app.post('/api/links', async (req, res) => {
         if (!shortCode) {
             shortCode = generateShortCode();
             // Ensure uniqueness
-            while (await Link.findOne({ shortCode })) {
+            while (links.find(l => l.shortCode === shortCode)) {
                 shortCode = generateShortCode();
             }
         } else {
             // Check if custom alias already exists
-            const existing = await Link.findOne({ shortCode: customAlias });
+            const existing = links.find(l => l.shortCode === customAlias.toUpperCase());
             if (existing) {
                 return res.status(400).json({ error: 'Custom alias already exists' });
             }
@@ -95,23 +47,27 @@ app.post('/api/links', async (req, res) => {
         const shortUrl = `${baseUrl}/r/${shortCode}`;
         const displayUrl = `LinQ/${shortCode}`;
         
-        const link = new Link({
-            shortCode,
+        const link = {
+            id: nextId++,
+            shortCode: shortCode.toUpperCase(),
             originalUrl,
             displayUrl,
-            shortUrl
-        });
+            shortUrl,
+            clicks: 0,
+            createdAt: new Date(),
+            isActive: true
+        };
         
-        await link.save();
+        links.unshift(link);
         
         res.json({
-            id: link._id,
+            id: link.id,
             originalUrl: link.originalUrl,
             shortUrl,
             displayUrl,
-            shortCode,
+            shortCode: link.shortCode,
             clicks: link.clicks,
-            createdAt: link.createdAt
+            createdAt: link.createdAt.toLocaleDateString()
         });
         
     } catch (error) {
@@ -120,17 +76,14 @@ app.post('/api/links', async (req, res) => {
     }
 });
 
-// Get all links (for dashboard)
+// Get all links
 app.get('/api/links', async (req, res) => {
     try {
-        const links = await Link.find({ isActive: true })
-            .sort({ createdAt: -1 })
-            .limit(100);
-        
+        const activeLinks = links.filter(l => l.isActive);
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         
-        const formattedLinks = links.map(link => ({
-            id: link._id,
+        const formattedLinks = activeLinks.map(link => ({
+            id: link.id,
             originalUrl: link.originalUrl,
             shortUrl: `${baseUrl}/r/${link.shortCode}`,
             displayUrl: link.displayUrl,
@@ -151,10 +104,9 @@ app.get('/r/:shortCode', async (req, res) => {
     try {
         const { shortCode } = req.params;
         
-        const link = await Link.findOne({ 
-            shortCode: shortCode.toUpperCase(), 
-            isActive: true 
-        });
+        const link = links.find(l => 
+            l.shortCode === shortCode.toUpperCase() && l.isActive
+        );
         
         if (!link) {
             return res.status(404).send(`
@@ -181,7 +133,8 @@ app.get('/r/:shortCode', async (req, res) => {
         
         // Update click count
         link.clicks += 1;
-        await link.save();
+        
+        console.log(`📊 Redirecting ${shortCode} to ${link.originalUrl} (${link.clicks} clicks)`);
         
         // Redirect to original URL
         res.redirect(link.originalUrl);
@@ -197,7 +150,10 @@ app.delete('/api/links/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
-        await Link.findByIdAndUpdate(id, { isActive: false });
+        const link = links.find(l => l.id === parseInt(id));
+        if (link) {
+            link.isActive = false;
+        }
         
         res.json({ message: 'Link deleted successfully' });
     } catch (error) {
@@ -218,7 +174,12 @@ function generateShortCode() {
 
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        totalLinks: links.filter(l => l.isActive).length,
+        storage: 'in-memory'
+    });
 });
 
 // Serve index.html for root
@@ -229,6 +190,8 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 LinQrius server running on http://localhost:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 Link Shortener: http://localhost:${PORT}/link-shorten-db.html`);
+    console.log(`💾 Storage: In-Memory (will reset on restart)`);
 });
 
 module.exports = app;
