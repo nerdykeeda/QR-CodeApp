@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius - Link Shortener with Database</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-link"></i> LinQrius Link Shortener</h1>
+                    <p>Create short links that work everywhere with database storage</p>
+                </div>
+                <nav class="nav-menu">
+                    <ul>
+                        <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="vcard-qr.html"><i class="fas fa-qrcode"></i> VCard QR</a></li>
+                        <li><a href="link-shorten-db.html" class="active"><i class="fas fa-link"></i> Link Shorten (DB)</a></li>
+                        <li><a href="clickcart.html"><i class="fas fa-shopping-cart"></i> ClickCart</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2><i class="fas fa-link"></i> Create Short Link</h2>
+                <form id="shortenForm" class="shorten-form">
+                    <div class="form-group">
+                        <label for="longUrl">Enter URL to shorten *</label>
+                        <input type="url" id="longUrl" required placeholder="https://example.com/very-long-url">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customAlias">Custom Alias (optional)</label>
+                        <input type="text" id="customAlias" placeholder="CUSTOM" maxlength="10" pattern="[A-Za-z0-9]+">
+                        <small>Only letters and numbers, max 10 characters</small>
+                    </div>
+                    
+                    <button type="submit" class="shorten-btn">
+                        <i class="fas fa-compress-alt"></i> Create Short Link
+                    </button>
+                </form>
+            </div>
+
+            <div class="links-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-list"></i> Recent Links</h3>
+                    <button onclick="linkShortener.loadLinks()" class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                
+                <div id="linksList">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Loading links...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LinQrius</h4>
+                    <p>Database-powered link shortening for global access.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li>✅ Global link access</li>
+                        <li>✅ Click tracking</li>
+                        <li>✅ Custom aliases</li>
+                        <li>✅ QR code generation</li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        class LinkShortenerDB {
+            constructor() {
+                this.apiBase = '/api'; // Adjust based on your server setup
+                this.initializeEventListeners();
+                this.loadLinks();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('shortenForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.shortenUrl();
+                });
+            }
+
+            async shortenUrl() {
+                const longUrl = document.getElementById('longUrl').value.trim();
+                const customAlias = document.getElementById('customAlias').value.trim().toUpperCase();
+                
+                if (!longUrl) {
+                    this.showNotification('Please enter a valid URL', 'error');
+                    return;
+                }
+
+                // Show loading
+                const btn = document.querySelector('.shorten-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`${this.apiBase}/links`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            originalUrl: longUrl,
+                            customAlias: customAlias || undefined
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to create short link');
+                    }
+
+                    // Clear form
+                    document.getElementById('shortenForm').reset();
+                    
+                    // Reload links
+                    this.loadLinks();
+                    
+                    this.showNotification('Short link created successfully!', 'success');
+
+                } catch (error) {
+                    console.error('Error creating short link:', error);
+                    this.showNotification(error.message || 'Failed to create short link', 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            async loadLinks() {
+                const container = document.getElementById('linksList');
+                container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading links...</div>';
+
+                try {
+                    const response = await fetch(`${this.apiBase}/links`);
+                    const links = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load links');
+                    }
+
+                    this.displayLinks(links);
+
+                } catch (error) {
+                    console.error('Error loading links:', error);
+                    container.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Failed to load links: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            displayLinks(links) {
+                const container = document.getElementById('linksList');
+                
+                if (links.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-links">
+                            <i class="fas fa-link"></i>
+                            <h3>No links yet</h3>
+                            <p>Create your first short link above!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const linksHTML = links.map(link => `
+                    <div class="shortened-link-card">
+                        <div class="link-info">
+                            <div class="original-url">
+                                <strong>Original:</strong> 
+                                <a href="${link.originalUrl}" target="_blank">${link.originalUrl}</a>
+                            </div>
+                            <div class="shortened-url">
+                                <strong>Display:</strong> 
+                                <span class="short-url-display">${link.displayUrl}</span>
+                            </div>
+                            <div class="full-url">
+                                <strong>Short URL:</strong> 
+                                <a href="${link.shortUrl}" target="_blank" class="short-url">${link.shortUrl}</a>
+                            </div>
+                            <div class="link-meta">
+                                <span><i class="fas fa-calendar"></i> ${link.createdAt}</span>
+                                <span><i class="fas fa-mouse-pointer"></i> ${link.clicks} clicks</span>
+                            </div>
+                        </div>
+                        <div class="link-actions">
+                            <button onclick="window.open('${link.shortUrl}', '_blank')" class="action-btn">
+                                <i class="fas fa-external-link-alt"></i> Test
+                            </button>
+                            <button onclick="linkShortener.copyToClipboard('${link.shortUrl}')" class="action-btn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <button onclick="linkShortener.generateQR('${link.shortUrl}')" class="action-btn">
+                                <i class="fas fa-qrcode"></i> QR
+                            </button>
+                            <button onclick="linkShortener.deleteLink('${link.id}')" class="action-btn delete">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = linksHTML;
+            }
+
+            async deleteLink(id) {
+                if (!confirm('Are you sure you want to delete this link?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiBase}/links/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to delete link');
+                    }
+
+                    this.loadLinks();
+                    this.showNotification('Link deleted successfully!', 'success');
+
+                } catch (error) {
+                    console.error('Error deleting link:', error);
+                    this.showNotification('Failed to delete link', 'error');
+                }
+            }
+
+            copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showNotification('Link copied to clipboard!', 'success');
+                }).catch(() => {
+                    this.showNotification('Failed to copy link', 'error');
+                });
+            }
+
+            generateQR(url) {
+                // Use QRCode library to generate QR code
+                if (typeof QRCode === 'undefined') {
+                    this.showNotification('QR Code library not loaded', 'error');
+                    return;
+                }
+
+                QRCode.toDataURL(url, {
+                    errorCorrectionLevel: 'H',
+                    width: 256,
+                    margin: 2,
+                    color: { dark: '#000000', light: '#FFFFFF' }
+                }).then(dataUrl => {
+                    // Create modal to show QR code
+                    const modal = document.createElement('div');
+                    modal.className = 'modal';
+                    modal.style.display = 'block';
+                    modal.innerHTML = `
+                        <div class="modal-content">
+                            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                            <h3>QR Code</h3>
+                            <div style="text-align: center; margin: 20px 0;">
+                                <img src="${dataUrl}" alt="QR Code" style="max-width: 100%; border-radius: 10px;">
+                            </div>
+                            <div style="text-align: center;">
+                                <button onclick="linkShortener.downloadQR('${dataUrl}', '${url}')" class="download-btn">
+                                    <i class="fas fa-download"></i> Download QR Code
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }).catch(error => {
+                    console.error('QR generation error:', error);
+                    this.showNotification('Failed to generate QR code', 'error');
+                });
+            }
+
+            downloadQR(dataUrl, url) {
+                const link = document.createElement('a');
+                link.download = `qr-${url.replace(/[^a-zA-Z0-9]/g, '')}.png`;
+                link.href = dataUrl;
+                link.click();
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    background: ${type === 'success' ? '#48bb78' : '#f56565'};
+                    color: white;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    z-index: 1000;
+                    opacity: 0;
+                    transform: translateX(100%);
+                    transition: all 0.3s ease;
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.opacity = '1';
+                    notification.style.transform = 'translateX(0)';
+                }, 100);
+                
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.linkShortener = new LinkShortenerDB();
+        });
+    </script>
+
+    <!-- QRCode library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+</body>
+</html>
