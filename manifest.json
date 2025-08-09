@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "LinQrius - Digital Toolkit",
   "short_name": "LinQrius",
   "description": "Your complete digital toolkit for VCard QR generation, link shortening, and product management",
@@ -9,7 +10,24 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
+  "dir": "ltr",
   "categories": ["productivity", "utilities"],
+  "iarc_rating_id": "e58c174a-81d2-5c3c-32cc-34b8de4a52e9",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope_extensions": [],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "screenshots": [
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "LinQrius VCard QR Generator"
+    }
+  ],
   "icons": [
     {
       "src": "icons/icon-192x192.png",
