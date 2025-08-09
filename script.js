@@ -1183,3 +1183,269 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Authentication System
+class AuthSystem {
+    constructor() {
+        this.currentUser = null;
+        this.initializeAuth();
+    }
+
+    initializeAuth() {
+        // Check if user is already logged in
+        const savedUser = localStorage.getItem('linqrius_user');
+        if (savedUser) {
+            this.currentUser = JSON.parse(savedUser);
+            this.updateAuthUI();
+        }
+        
+        // Initialize auth form listeners
+        this.initializeAuthForms();
+    }
+
+    initializeAuthForms() {
+        // Login form
+        const loginForm = document.getElementById('loginFormSubmit');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleLogin();
+            });
+        }
+
+        // Signup form
+        const signupForm = document.getElementById('signupFormSubmit');
+        if (signupForm) {
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSignup();
+            });
+        }
+
+        // Forgot password form
+        const forgotForm = document.getElementById('forgotPasswordFormSubmit');
+        if (forgotForm) {
+            forgotForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleForgotPassword();
+            });
+        }
+    }
+
+    handleLogin() {
+        const email = document.getElementById('loginEmail')?.value.trim();
+        const password = document.getElementById('loginPassword')?.value;
+        const rememberMe = document.getElementById('rememberMe')?.checked;
+
+        if (!email || !password) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        // Simple validation for demo purposes
+        // In production, this would be a real API call
+        const users = JSON.parse(localStorage.getItem('linqrius_users') || '[]');
+        const user = users.find(u => u.email === email && u.password === password);
+
+        if (user) {
+            this.currentUser = {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                createdAt: user.createdAt
+            };
+
+            // Save user session
+            if (rememberMe) {
+                localStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
+            } else {
+                sessionStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
+            }
+
+            this.updateAuthUI();
+            this.closeAuthModal();
+            showNotification(`Welcome back, ${user.firstName}!`, 'success');
+        } else {
+            showNotification('Invalid email or password', 'error');
+        }
+    }
+
+    handleSignup() {
+        const firstName = document.getElementById('signupFirstName')?.value.trim();
+        const lastName = document.getElementById('signupLastName')?.value.trim();
+        const email = document.getElementById('signupEmail')?.value.trim();
+        const password = document.getElementById('signupPassword')?.value;
+        const confirmPassword = document.getElementById('signupConfirmPassword')?.value;
+        const agreeTerms = document.getElementById('agreeTerms')?.checked;
+
+        // Validation
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showNotification('Passwords do not match', 'error');
+            return;
+        }
+
+        if (password.length < 8) {
+            showNotification('Password must be at least 8 characters long', 'error');
+            return;
+        }
+
+        if (!agreeTerms) {
+            showNotification('Please agree to the Terms & Conditions', 'error');
+            return;
+        }
+
+        // Check if user already exists
+        const users = JSON.parse(localStorage.getItem('linqrius_users') || '[]');
+        if (users.some(u => u.email === email)) {
+            showNotification('An account with this email already exists', 'error');
+            return;
+        }
+
+        // Create new user
+        const newUser = {
+            id: Date.now().toString(),
+            firstName,
+            lastName,
+            email,
+            password, // In production, this would be hashed
+            createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        localStorage.setItem('linqrius_users', JSON.stringify(users));
+
+        // Auto-login the new user
+        this.currentUser = {
+            id: newUser.id,
+            email: newUser.email,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            createdAt: newUser.createdAt
+        };
+
+        localStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
+        this.updateAuthUI();
+        this.closeAuthModal();
+        showNotification(`Welcome to LinQrius, ${firstName}!`, 'success');
+    }
+
+    handleForgotPassword() {
+        const email = document.getElementById('forgotEmail')?.value.trim();
+
+        if (!email) {
+            showNotification('Please enter your email address', 'error');
+            return;
+        }
+
+        // In production, this would send a real email
+        showNotification('Password reset link sent to your email!', 'success');
+        setTimeout(() => {
+            switchAuth('login');
+        }, 2000);
+    }
+
+    updateAuthUI() {
+        const authButtons = document.getElementById('authButtons');
+        const userMenu = document.getElementById('userMenu');
+        const userName = document.getElementById('userName');
+
+        if (this.currentUser) {
+            // User is logged in
+            if (authButtons) authButtons.style.display = 'none';
+            if (userMenu) {
+                userMenu.style.display = 'flex';
+                userMenu.style.alignItems = 'center';
+            }
+            if (userName) userName.textContent = this.currentUser.firstName;
+        } else {
+            // User is not logged in
+            if (authButtons) authButtons.style.display = 'flex';
+            if (userMenu) userMenu.style.display = 'none';
+        }
+    }
+
+    logout() {
+        this.currentUser = null;
+        localStorage.removeItem('linqrius_user');
+        sessionStorage.removeItem('linqrius_user');
+        this.updateAuthUI();
+        showNotification('Successfully logged out', 'info');
+    }
+
+    closeAuthModal() {
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+            authModal.style.display = 'none';
+        }
+    }
+}
+
+// Global auth functions
+function openAuthModal(type) {
+    const authModal = document.getElementById('authModal');
+    if (authModal) {
+        authModal.style.display = 'block';
+        switchAuth(type);
+    }
+}
+
+function switchAuth(type) {
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const forgotForm = document.getElementById('forgotPasswordForm');
+
+    // Hide all forms
+    if (loginForm) loginForm.style.display = 'none';
+    if (signupForm) signupForm.style.display = 'none';
+    if (forgotForm) forgotForm.style.display = 'none';
+
+    // Show selected form
+    switch (type) {
+        case 'login':
+            if (loginForm) loginForm.style.display = 'block';
+            break;
+        case 'signup':
+            if (signupForm) signupForm.style.display = 'block';
+            break;
+        case 'forgot':
+            if (forgotForm) forgotForm.style.display = 'block';
+            break;
+    }
+}
+
+function openForgotPassword() {
+    switchAuth('forgot');
+}
+
+function toggleUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
+function openProfile() {
+    window.location.href = 'profile.html';
+}
+
+function openDashboard() {
+    window.location.href = 'dashboard.html';
+}
+
+function logout() {
+    if (window.authSystem) {
+        window.authSystem.logout();
+    }
+    toggleUserDropdown();
+}
+
+// Initialize auth system
+document.addEventListener('DOMContentLoaded', () => {
+    window.authSystem = new AuthSystem();
+});
+
