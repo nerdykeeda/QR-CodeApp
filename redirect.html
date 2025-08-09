@@ -110,13 +110,20 @@
 
         // Load shortened links from localStorage
         function loadLinks() {
-            const saved = localStorage.getItem('linq_shortened_links');
-            return saved ? JSON.parse(saved) : [];
+            try {
+                const saved = localStorage.getItem('linq_shortened_links');
+                console.log('Loaded from localStorage:', saved);
+                return saved ? JSON.parse(saved) : [];
+            } catch (error) {
+                console.error('Error loading links:', error);
+                return [];
+            }
         }
 
         // Find and redirect to original URL
         function redirectToOriginal() {
             const shortCode = getShortCodeFromURL();
+            console.log('Looking for short code:', shortCode);
             
             if (!shortCode) {
                 showError('No short code provided');
@@ -126,10 +133,32 @@
             document.getElementById('shortCode').textContent = shortCode;
             
             const links = loadLinks();
-            const link = links.find(l => l.shortCode === shortCode);
+            console.log('All links:', links);
+            
+            const link = links.find(l => l.shortCode === shortCode || l.shortCode === shortCode.toUpperCase());
+            console.log('Found link:', link);
             
             if (!link) {
-                showError(`Short code "${shortCode}" not found`);
+                // Try to decode URL-encoded shortCode
+                const decodedCode = decodeURIComponent(shortCode);
+                const linkDecoded = links.find(l => l.shortCode === decodedCode || l.shortCode === decodedCode.toUpperCase());
+                
+                if (linkDecoded) {
+                    // Update click count
+                    linkDecoded.clicks++;
+                    localStorage.setItem('linq_shortened_links', JSON.stringify(links));
+                    
+                    // Show success and redirect
+                    showSuccess(linkDecoded.originalUrl);
+                    
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = linkDecoded.originalUrl;
+                    }, 2000);
+                    return;
+                }
+                
+                showError(`Short code "${shortCode}" not found. Available codes: ${links.map(l => l.shortCode).join(', ')}`);
                 return;
             }
             
