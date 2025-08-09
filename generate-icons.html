@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Generator</title>
+</head>
+<body>
+    <h1>LinQrius Icon Generator</h1>
+    <p>This will generate the required PWA icons for Android APK.</p>
+    
+    <div id="icons"></div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const iconsDiv = document.getElementById('icons');
+        
+        sizes.forEach(size => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add "LinQ" text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('LinQ', size/2, size/2);
+            
+            // Add QR code icon
+            ctx.font = `${size * 0.2}px Arial`;
+            ctx.fillText('QR', size/2, size * 0.8);
+            
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = canvas.toDataURL();
+            link.textContent = `Download ${size}x${size}`;
+            link.style.display = 'block';
+            link.style.margin = '10px';
+            link.style.padding = '10px';
+            link.style.backgroundColor = '#f0f0f0';
+            link.style.textDecoration = 'none';
+            link.style.color = '#333';
+            
+            iconsDiv.appendChild(link);
+        });
+    </script>
+</body>
+</html>
