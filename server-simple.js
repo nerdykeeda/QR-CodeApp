@@ -5,9 +5,45 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// API Key Configuration
+const API_KEYS = {
+    // You can add multiple API keys for different users/clients
+    'linqrius-main': 'sk-linqrius-2024-secure-key-12345',
+    'linqrius-admin': 'sk-linqrius-admin-2024-67890',
+    'linqrius-test': 'sk-linqrius-test-2024-abcde'
+};
+
+// API Key Authentication Middleware
+const authenticateApiKey = (req, res, next) => {
+    const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+    
+    if (!apiKey) {
+        return res.status(401).json({ 
+            error: 'API key required',
+            message: 'Please provide an API key in the X-API-Key header or Authorization header'
+        });
+    }
+    
+    // Check if API key exists
+    const validKey = Object.values(API_KEYS).find(key => key === apiKey);
+    if (!validKey) {
+        return res.status(403).json({ 
+            error: 'Invalid API key',
+            message: 'The provided API key is not valid'
+        });
+    }
+    
+    // Add API key info to request for logging
+    const keyName = Object.keys(API_KEYS).find(name => API_KEYS[name] === apiKey);
+    req.apiKeyInfo = { keyName, key: apiKey };
+    
+    console.log(`🔑 API request authenticated with key: ${keyName}`);
+    next();
+};
+
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static('.')); // Serve static files
 
 // In-memory storage (for testing - will reset when server restarts)
@@ -15,12 +51,17 @@ let links = [];
 let nextId = 1;
 
 console.log('🚀 LinQrius server starting with in-memory storage...');
+console.log('🔑 API Key authentication enabled');
+console.log(`📋 Available API Keys: ${Object.keys(API_KEYS).join(', ')}`);
 
-// API Routes
+// API Routes - Protected with API Key Authentication
 
 // Create short link
-app.post('/api/links', async (req, res) => {
+app.post('/api/links', authenticateApiKey, async (req, res) => {
     try {
+        console.log('Received request body:', req.body);
+        console.log('Request headers:', req.headers);
+        
         const { originalUrl, customAlias } = req.body;
         
         if (!originalUrl) {
@@ -60,6 +101,8 @@ app.post('/api/links', async (req, res) => {
         
         links.unshift(link);
         
+        console.log('Link created successfully:', link);
+        
         res.json({
             id: link.id,
             originalUrl: link.originalUrl,
@@ -72,12 +115,12 @@ app.post('/api/links', async (req, res) => {
         
     } catch (error) {
         console.error('Error creating link:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 
 // Get all links
-app.get('/api/links', async (req, res) => {
+app.get('/api/links', authenticateApiKey, async (req, res) => {
     try {
         const activeLinks = links.filter(l => l.isActive);
         const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -145,8 +188,37 @@ app.get('/r/:shortCode', async (req, res) => {
     }
 });
 
+// API Key Management Endpoint (Protected with admin key)
+app.get('/api/keys', authenticateApiKey, (req, res) => {
+    try {
+        // Only allow admin key to view API keys
+        if (req.apiKeyInfo.keyName !== 'linqrius-admin') {
+            return res.status(403).json({ 
+                error: 'Access denied',
+                message: 'Only admin API key can access this endpoint'
+            });
+        }
+        
+        const keyInfo = Object.keys(API_KEYS).map(name => ({
+            name,
+            key: API_KEYS[name].substring(0, 10) + '...',
+            permissions: name === 'linqrius-admin' ? 'full' : 'standard'
+        }));
+        
+        res.json({
+            message: 'API Keys retrieved successfully',
+            keys: keyInfo,
+            totalKeys: keyInfo.length
+        });
+        
+    } catch (error) {
+        console.error('Error retrieving API keys:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Delete link
-app.delete('/api/links/:id', async (req, res) => {
+app.delete('/api/links/:id', authenticateApiKey, async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -172,13 +244,15 @@ function generateShortCode() {
     return result;
 }
 
-// Health check
+// Health check (No API key required for health checks)
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
         totalLinks: links.filter(l => l.isActive).length,
-        storage: 'in-memory'
+        storage: 'in-memory',
+        apiKeyAuth: 'enabled',
+        totalApiKeys: Object.keys(API_KEYS).length
     });
 });
 

@@ -614,6 +614,131 @@ body {
     object-fit: cover;
 }
 
+/* Logo Upload for QR Code Center */
+.logo-upload {
+    margin-bottom: 30px;
+}
+
+.logo-upload .upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    position: relative;
+}
+
+.logo-upload .upload-area:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.logo-upload .upload-placeholder {
+    color: #666;
+}
+
+.logo-upload .upload-placeholder i {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.logo-upload .upload-placeholder p {
+    margin: 10px 0 5px;
+    font-weight: 500;
+}
+
+.logo-upload .upload-placeholder span {
+    font-size: 14px;
+    color: #999;
+}
+
+.logo-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.logo-actions {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.remove-logo-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+.remove-logo-btn:hover {
+    background: #c82333;
+}
+
+.remove-logo-btn i {
+    margin-right: 5px;
+}
+
+.premium-badge {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* Premium Features Notice */
+.premium-notice {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 30px 0;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.notice-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.notice-header i {
+    font-size: 24px;
+    margin-right: 12px;
+    color: #ffd700;
+}
+
+.notice-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.notice-content p {
+    margin: 8px 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.notice-content strong {
+    color: #ffd700;
+}
+
 /* Camera Options */
 .camera-options {
     display: flex;

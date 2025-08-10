@@ -132,6 +132,26 @@
                         </div>
                     </div>
 
+                                        <!-- Logo Upload for QR Code Center (Premium Feature) -->
+                    <div class="form-group logo-upload">
+                        <label for="qrLogo">Logo for QR Code Center (Premium)</label>
+                        <div class="upload-area" id="logoUploadArea">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-image"></i>
+                                <p>Click to upload logo for QR center</p>
+                                <span>JPG, PNG, GIF up to 2MB</span>
+                                <small class="premium-badge">Premium Feature</small>
+                            </div>
+                            <img id="logoPreview" class="logo-preview" style="display: none;" />
+                            <input type="file" id="qrLogo" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="logo-actions" id="logoActions" style="display: none;">
+                            <button type="button" id="removeLogoBtn" class="remove-logo-btn">
+                                <i class="fas fa-trash"></i> Remove Logo
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Basic Information -->
                     <div class="form-row">
                         <div class="form-group">
@@ -155,6 +175,31 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department">Department</label>
+                            <input type="text" id="department" placeholder="e.g., Engineering, Sales, Marketing">
+                        </div>
+                        <div class="form-group">
+                            <label for="industry">Industry</label>
+                            <select id="industry">
+                                <option value="">Select Industry</option>
+                                <option value="technology">Technology</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="finance">Finance</option>
+                                <option value="education">Education</option>
+                                <option value="retail">Retail</option>
+                                <option value="manufacturing">Manufacturing</option>
+                                <option value="consulting">Consulting</option>
+                                <option value="real-estate">Real Estate</option>
+                                <option value="legal">Legal</option>
+                                <option value="media">Media & Entertainment</option>
+                                <option value="non-profit">Non-Profit</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Contact Information -->
                     <div class="form-row">
                         <div class="form-group">
@@ -167,14 +212,52 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="workPhone">Work Phone</label>
+                            <input type="tel" id="workPhone" placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="fax">Fax</label>
+                            <input type="tel" id="fax" placeholder="+1 234 567 8900">
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="website">Website</label>
                         <input type="url" id="website" placeholder="https://example.com">
                     </div>
 
                     <div class="form-group">
-                        <label for="address">Address</label>
-                        <textarea id="address" rows="3" placeholder="Enter your full address"></textarea>
+                        <label for="address">Business Address</label>
+                        <textarea id="address" rows="3" placeholder="Enter your full business address"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" placeholder="e.g., New York">
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State/Province</label>
+                            <input type="text" id="state" placeholder="e.g., NY">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="zipCode">ZIP/Postal Code</label>
+                            <input type="text" id="zipCode" placeholder="e.g., 10001">
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <input type="text" id="country" placeholder="e.g., USA">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="businessHours">Business Hours</label>
+                        <textarea id="businessHours" rows="2" placeholder="e.g., Mon-Fri: 9AM-6PM, Sat: 10AM-4PM"></textarea>
                     </div>
 
                     <!-- Social Media Links -->
@@ -204,6 +287,59 @@
                     <div class="form-group">
                         <label for="youtube">YouTube</label>
                         <input type="url" id="youtube" placeholder="https://youtube.com/@channel">
+                    </div>
+
+                    <!-- Professional Details -->
+                    <h3><i class="fas fa-briefcase"></i> Professional Details</h3>
+                    <div class="form-group">
+                        <label for="specializations">Specializations/Services</label>
+                        <textarea id="specializations" rows="2" placeholder="e.g., Web Development, Digital Marketing, SEO, Mobile Apps"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skills">Skills & Expertise</label>
+                        <textarea id="skills" rows="2" placeholder="e.g., JavaScript, React, Node.js, Python, Project Management"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="certifications">Certifications</label>
+                        <textarea id="certifications" rows="2" placeholder="e.g., PMP, AWS Certified, Google Analytics"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="languages">Languages Spoken</label>
+                        <input type="text" id="languages" placeholder="e.g., English, Spanish, French">
+                    </div>
+
+                    <!-- Educational Background (Optional) -->
+                    <h3><i class="fas fa-graduation-cap"></i> Educational Background (Optional)</h3>
+                    <div class="form-group">
+                        <label for="education">Education</label>
+                        <textarea id="education" rows="2" placeholder="e.g., Bachelor's in Computer Science, University of Technology"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="experience">Years of Experience</label>
+                        <select id="experience">
+                            <option value="">Select Experience</option>
+                            <option value="0-1">0-1 years</option>
+                            <option value="1-3">1-3 years</option>
+                            <option value="3-5">3-5 years</option>
+                            <option value="5-10">5-10 years</option>
+                            <option value="10+">10+ years</option>
+                        </select>
+                    </div>
+
+                    <!-- Premium Features Notice -->
+                    <div class="premium-notice">
+                        <div class="notice-header">
+                            <i class="fas fa-crown"></i>
+                            <h4>Premium Features</h4>
+                        </div>
+                        <div class="notice-content">
+                            <p><strong>Free:</strong> Basic QR Code Generation</p>
+                            <p><strong>Premium ($2/month or $9/year):</strong> Digital Business Card + Analytics + Logo in QR</p>
+                        </div>
                     </div>
 
                     <button type="submit" class="generate-btn">
@@ -405,6 +541,11 @@
                             <input type="email" id="signupEmail" required placeholder="Enter your email">
                         </div>
                         <div class="form-group">
+                            <label for="signupPhone">Phone Number (Optional)</label>
+                            <input type="tel" id="signupPhone" placeholder="+1 (555) 123-4567">
+                            <small>Required if you enable 2-Factor Authentication</small>
+                        </div>
+                        <div class="form-group">
                             <label for="signupPassword">Password *</label>
                             <input type="password" id="signupPassword" required placeholder="Create a password">
                             <small>Minimum 8 characters with letters and numbers</small>
@@ -414,6 +555,11 @@
                             <input type="password" id="signupConfirmPassword" required placeholder="Confirm your password">
                         </div>
                         <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="enable2FA">
+                                <span class="checkmark"></span>
+                                Enable 2-Factor Authentication (SMS)
+                            </label>
                             <label class="checkbox-container">
                                 <input type="checkbox" id="agreeTerms" required>
                                 <span class="checkmark"></span>
@@ -446,10 +592,51 @@
                         <p>Remember your password? <a href="#" onclick="switchAuth('login')">Sign In</a></p>
                     </div>
                 </div>
+
+                <!-- 2FA Verification Form (Login) -->
+                <div id="twoFAForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
+                    <p class="auth-subtitle">Enter the 6-digit code sent to your phone</p>
+                    <form id="twoFAForm">
+                        <div class="form-group">
+                            <label for="2faCode">Verification Code *</label>
+                            <input type="text" id="2faCode" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                            <small>Code expires in 5 minutes</small>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-check"></i> Verify & Sign In
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Didn't receive the code? <a href="#" onclick="resend2FACode()">Resend Code</a></p>
+                        <p><a href="#" onclick="switchAuth('login')">Back to Sign In</a></p>
+                    </div>
+                </div>
+
+                <!-- 2FA Verification Form (Signup) -->
+                <div id="twoFASignupForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-shield-alt"></i> Verify Your Phone Number</h3>
+                    <p class="auth-subtitle">Enter the 6-digit code sent to your phone to complete registration</p>
+                    <form id="twoFASignupForm">
+                        <div class="form-group">
+                            <label for="2faSignupCode">Verification Code *</label>
+                            <input type="text" id="2faSignupCode" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                            <small>Code expires in 5 minutes</small>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-check"></i> Verify & Create Account
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Didn't receive the code? <a href="#" onclick="resend2FASignupCode()">Resend Code</a></p>
+                        <p><a href="#" onclick="switchAuth('signup')">Back to Sign Up</a></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="auth-sms.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

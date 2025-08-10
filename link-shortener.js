@@ -1,426 +1,236 @@
-// Link Shortener JavaScript
+// LinQrius Link Shortener with API Key Authentication
 class LinkShortener {
     constructor() {
-        this.baseUrl = 'https://linqrius.com/LinQ/';
-        this.currentShortenedLink = null;
-        this.initializeLinkShortener();
+        this.apiKey = 'sk-linqrius-2024-secure-key-12345'; // Default API key
+        this.baseUrl = window.location.origin;
+        this.init();
     }
 
-    initializeLinkShortener() {
-        this.loadRecentLinks();
-        this.initializeEventListeners();
+    init() {
+        this.setupEventListeners();
+        this.loadLinks();
+        this.setupApiKeyInput();
     }
 
-    initializeEventListeners() {
-        const form = document.getElementById('linkShortenerForm');
+    setupApiKeyInput() {
+        // Add API key input to the form
+        const form = document.querySelector('.shorten-form');
+        if (form) {
+            const apiKeyGroup = document.createElement('div');
+            apiKeyGroup.className = 'form-group';
+            apiKeyGroup.innerHTML = `
+                <label for="apiKey">API Key:</label>
+                <input type="password" id="apiKey" class="form-control" 
+                       value="${this.apiKey}" placeholder="Enter your API key">
+                <small class="form-text">Your API key is required to create short links</small>
+            `;
+            
+            // Insert before the first form group
+            const firstGroup = form.querySelector('.form-group');
+            form.insertBefore(apiKeyGroup, firstGroup);
+            
+            // Update API key when input changes
+            document.getElementById('apiKey').addEventListener('input', (e) => {
+                this.apiKey = e.target.value;
+            });
+        }
+    }
+
+    setupEventListeners() {
+        const form = document.querySelector('.shorten-form');
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.shortenLink();
+                this.shortenUrl();
             });
         }
 
-        // Modal functionality
-        const modal = document.getElementById('authModal');
-        const closeButtons = document.querySelectorAll('.close');
-
-        closeButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
+        // Copy button functionality
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-btn')) {
+                this.copyToClipboard(e.target.dataset.url);
             }
         });
     }
 
-    generateShortId(length = 5) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    }
+    async shortenUrl() {
+        const urlInput = document.getElementById('urlInput');
+        const customAliasInput = document.getElementById('customAlias');
+        const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
 
-    async shortenLink() {
-        const originalUrl = document.getElementById('originalUrl').value.trim();
-        const customAlias = document.getElementById('customAlias').value.trim();
-        const linkTitle = document.getElementById('linkTitle').value.trim();
+        const originalUrl = urlInput.value.trim();
+        const customAlias = customAliasInput.value.trim();
 
         if (!originalUrl) {
-            showNotification('Please enter a valid URL', 'error');
+            this.showError('Please enter a URL');
             return;
         }
 
-        // Validate URL
-        try {
-            new URL(originalUrl);
-        } catch (error) {
-            showNotification('Please enter a valid URL', 'error');
+        if (!this.apiKey) {
+            this.showError('Please enter your API key');
             return;
         }
 
-        try {
-            // Generate short ID
-            let shortId = customAlias || this.generateShortId();
-            
-            // Check if custom alias already exists
-            if (customAlias && this.isAliasExists(customAlias)) {
-                showNotification('Custom alias already exists. Please choose another.', 'error');
-                return;
-            }
+        // Show loading
+        loadingDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
 
-            // Create shortened link
-            const shortUrl = this.baseUrl + shortId;
-            const linkData = {
-                id: Date.now().toString(),
+        try {
+            const response = await fetch(`${this.baseUrl}/api/links`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': this.apiKey
+                },
+                body: JSON.stringify({
                 originalUrl: originalUrl,
-                shortUrl: shortUrl,
-                shortId: shortId,
-                title: linkTitle || this.extractDomain(originalUrl),
-                clicks: 0,
-                createdAt: new Date().toISOString(),
-                userId: this.getCurrentUserId()
-            };
+                    customAlias: customAlias || undefined
+                })
+            });
 
-            // Save to localStorage
-            this.saveLinkData(linkData);
+            const data = await response.json();
 
-            // Display result
-            this.displayResult(linkData);
-
-            // Reset form
-            document.getElementById('linkShortenerForm').reset();
-
-            // Reload recent links
-            this.loadRecentLinks();
-
-            showNotification('Link shortened successfully!', 'success');
-
+            if (response.ok) {
+                this.showSuccess(data);
+                urlInput.value = '';
+                customAliasInput.value = '';
+                this.loadLinks(); // Refresh the links list
+            } else {
+                this.showError(data.error || 'Failed to create short link');
+            }
         } catch (error) {
-            console.error('Error shortening link:', error);
-            showNotification('Failed to shorten link. Please try again.', 'error');
+            console.error('Error:', error);
+            this.showError('Network error. Please try again.');
+        } finally {
+            loadingDiv.style.display = 'none';
         }
     }
 
-    isAliasExists(alias) {
-        const links = this.getAllLinks();
-        return links.some(link => link.shortId === alias);
-    }
+    async loadLinks() {
+        const linksContainer = document.getElementById('linksList');
+        if (!linksContainer) return;
 
-    extractDomain(url) {
         try {
-            const domain = new URL(url).hostname;
-            return domain.replace('www.', '');
+            const response = await fetch(`${this.baseUrl}/api/links`, {
+                headers: {
+                    'X-API-Key': this.apiKey
+                }
+            });
+
+            if (response.ok) {
+                const links = await response.json();
+                this.displayLinks(links);
+            } else {
+                linksContainer.innerHTML = '<p class="error">Failed to load links</p>';
+            }
         } catch (error) {
-            return 'Unknown Domain';
+            console.error('Error loading links:', error);
+            linksContainer.innerHTML = '<p class="error">Error loading links</p>';
         }
     }
 
-    getCurrentUserId() {
-        const user = JSON.parse(localStorage.getItem('linqrius_user') || sessionStorage.getItem('linqrius_user') || 'null');
-        return user ? user.id : 'anonymous';
-    }
-
-    saveLinkData(linkData) {
-        const links = this.getAllLinks();
-        links.push(linkData);
-        localStorage.setItem('linqrius_links', JSON.stringify(links));
-    }
-
-    getAllLinks() {
-        return JSON.parse(localStorage.getItem('linqrius_links') || '[]');
-    }
-
-    getUserLinks() {
-        const userId = this.getCurrentUserId();
-        return this.getAllLinks().filter(link => link.userId === userId);
-    }
-
-    displayResult(linkData) {
-        this.currentShortenedLink = linkData;
-        
-        // Show result section
-        const resultSection = document.getElementById('resultSection');
-        resultSection.style.display = 'block';
-
-        // Populate data
-        document.getElementById('shortenedUrl').value = linkData.shortUrl;
-        document.getElementById('clickCount').textContent = linkData.clicks;
-        document.getElementById('createdDate').textContent = new Date(linkData.createdAt).toLocaleDateString();
-
-        // Scroll to result
-        resultSection.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    loadRecentLinks() {
-        const links = this.getUserLinks().slice(-10).reverse(); // Last 10 links
-        const container = document.getElementById('recentLinks');
+    displayLinks(links) {
+        const linksContainer = document.getElementById('linksList');
+        if (!linksContainer) return;
 
         if (links.length === 0) {
-            container.innerHTML = `
-                <div class="no-links">
-                    <i class="fas fa-link"></i>
-                    <p>No links created yet</p>
-                    <small>Start by shortening your first link above</small>
-                </div>
-            `;
+            linksContainer.innerHTML = '<p class="no-links">No links created yet. Create your first short link above!</p>';
             return;
         }
 
-        const linksHTML = links.map(link => `
-            <div class="link-card">
-                <div class="link-header">
-                    <h4>${link.title}</h4>
-                    <div class="link-stats">
-                        <span class="click-count">
-                            <i class="fas fa-eye"></i> ${link.clicks}
-                        </span>
-                    </div>
+        const linksHtml = links.map(link => `
+            <div class="link-item">
+                <div class="link-info">
+                    <div class="original-url">
+                        <strong>Original:</strong> 
+                        <a href="${link.originalUrl}" target="_blank" rel="noopener noreferrer">
+                            ${link.originalUrl}
+                        </a>
                 </div>
-                <div class="link-urls">
                     <div class="short-url">
-                        <input type="text" value="${link.shortUrl}" readonly>
-                        <button onclick="linkShortener.copyLink('${link.shortUrl}')" class="copy-btn">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                        <strong>Short:</strong> 
+                        <a href="${link.shortUrl}" target="_blank" rel="noopener noreferrer">
+                            ${link.displayUrl}
+                        </a>
                     </div>
-                    <div class="original-url" title="${link.originalUrl}">
-                        ${this.truncateUrl(link.originalUrl, 50)}
+                    <div class="link-stats">
+                        <span class="clicks">👁️ ${link.clicks} clicks</span>
+                        <span class="created">📅 ${link.createdAt}</span>
                     </div>
                 </div>
                 <div class="link-actions">
-                    <button onclick="linkShortener.generateQRForLink('${link.shortUrl}')" class="mini-btn">
-                        <i class="fas fa-qrcode"></i>
+                    <button class="copy-btn btn btn-secondary" data-url="${link.shortUrl}">
+                        📋 Copy
                     </button>
-                    <button onclick="linkShortener.shareSpecificLink('${link.shortUrl}')" class="mini-btn">
-                        <i class="fas fa-share"></i>
+                    <button class="delete-btn btn btn-danger" onclick="linkShortener.deleteLink(${link.id})">
+                        🗑️ Delete
                     </button>
-                    <button onclick="linkShortener.deleteLink('${link.id}')" class="mini-btn danger">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-                <div class="link-meta">
-                    <small>Created: ${new Date(link.createdAt).toLocaleDateString()}</small>
                 </div>
             </div>
         `).join('');
 
-        container.innerHTML = linksHTML;
+        linksContainer.innerHTML = linksHtml;
     }
 
-    truncateUrl(url, maxLength) {
-        if (url.length <= maxLength) return url;
-        return url.substring(0, maxLength) + '...';
-    }
-
-    copyLink(url) {
-        navigator.clipboard.writeText(url).then(() => {
-            showNotification('Link copied to clipboard!', 'success');
-        }).catch(() => {
-            showNotification('Failed to copy link', 'error');
-        });
-    }
-
-    generateQRForLink(url) {
-        if (typeof QRCode === 'undefined') {
-            showNotification('QR Code library not loaded', 'error');
+    async deleteLink(linkId) {
+        if (!confirm('Are you sure you want to delete this link?')) {
             return;
         }
 
-        QRCode.toDataURL(url, {
-            errorCorrectionLevel: 'H',
-            width: 256,
-            margin: 2,
-            color: { dark: '#000000', light: '#FFFFFF' }
-        }).then(dataUrl => {
-            // Create modal to show QR code
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'block';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-                    <h3>QR Code for ${url}</h3>
-                    <div style="text-align: center; margin: 20px 0;">
-                        <img src="${dataUrl}" alt="QR Code" style="max-width: 100%; border-radius: 10px;">
-                    </div>
-                    <div style="text-align: center;">
-                        <button onclick="linkShortener.downloadQRCode('${dataUrl}', '${url}')" class="primary-btn">
-                            <i class="fas fa-download"></i> Download QR Code
-                        </button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }).catch(error => {
-            console.error('QR generation error:', error);
-            showNotification('Failed to generate QR code', 'error');
-        });
-    }
-
-    downloadQRCode(dataUrl, url) {
-        const link = document.createElement('a');
-        link.download = `qr-${url.replace(/[^a-zA-Z0-9]/g, '')}.png`;
-        link.href = dataUrl;
-        link.click();
-    }
-
-    shareSpecificLink(url) {
-        if (navigator.share) {
-            navigator.share({
-                title: 'Check out this link',
-                url: url
+        try {
+            const response = await fetch(`${this.baseUrl}/api/links/${linkId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-API-Key': this.apiKey
+                }
             });
+
+            if (response.ok) {
+                this.loadLinks(); // Refresh the list
+                this.showSuccess('Link deleted successfully');
         } else {
-            this.copyLink(url);
+                const data = await response.json();
+                this.showError(data.error || 'Failed to delete link');
+            }
+        } catch (error) {
+            console.error('Error deleting link:', error);
+            this.showError('Network error. Please try again.');
         }
     }
 
-    deleteLink(linkId) {
-        if (confirm('Are you sure you want to delete this link?')) {
-            const links = this.getAllLinks();
-            const updatedLinks = links.filter(link => link.id !== linkId);
-            localStorage.setItem('linqrius_links', JSON.stringify(updatedLinks));
-            this.loadRecentLinks();
-            showNotification('Link deleted successfully!', 'success');
-        }
-    }
-}
-
-// Global functions for buttons
-function copyToClipboard() {
-    const input = document.getElementById('shortenedUrl');
-    input.select();
-    document.execCommand('copy');
-    showNotification('Link copied to clipboard!', 'success');
-}
-
-function generateQRCode() {
-    if (!linkShortener.currentShortenedLink) {
-        showNotification('No link to generate QR code for', 'error');
-        return;
-    }
-
-    const qrSection = document.getElementById('qrSection');
-    const qrDisplay = document.getElementById('qrDisplay');
-
-    if (typeof QRCode === 'undefined') {
-        showNotification('QR Code library not loaded', 'error');
-        return;
-    }
-
-    QRCode.toCanvas(qrDisplay, linkShortener.currentShortenedLink.shortUrl, {
-        errorCorrectionLevel: 'H',
-        width: 200,
-        margin: 2,
-        color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-        }
-    }, function (error) {
-        if (error) {
-            console.error('QR generation error:', error);
-            showNotification('Failed to generate QR code', 'error');
-        } else {
-            qrSection.style.display = 'block';
-            qrSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-}
-
-function downloadQR() {
-    const canvas = document.querySelector('#qrDisplay canvas');
-    if (!canvas) {
-        showNotification('No QR code to download', 'error');
-        return;
-    }
-
-    const link = document.createElement('a');
-    link.download = `qr-${linkShortener.currentShortenedLink.shortId}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-}
-
-function shareLink() {
-    if (!linkShortener.currentShortenedLink) {
-        showNotification('No link to share', 'error');
-        return;
-    }
-
-    const url = linkShortener.currentShortenedLink.shortUrl;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: linkShortener.currentShortenedLink.title,
-            url: url
+    copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showSuccess('Link copied to clipboard!');
+        }).catch(() => {
+            this.showError('Failed to copy link');
         });
-    } else {
-        copyToClipboard();
+    }
+
+    showSuccess(message) {
+        this.showMessage(message, 'success');
+    }
+
+    showError(message) {
+        this.showMessage(message, 'error');
+    }
+
+    showMessage(message, type) {
+        const messageDiv = document.getElementById('message');
+        if (messageDiv) {
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
     }
 }
 
-function viewAnalytics() {
-    showNotification('Analytics feature coming soon!', 'info');
-}
-
-// Authentication functions
-function handleLogin(event) {
-    event.preventDefault();
-    if (window.authSystem) {
-        return window.authSystem.login(event);
-    }
-}
-
-function handleSignup(event) {
-    event.preventDefault();
-    if (window.authSystem) {
-        return window.authSystem.signup(event);
-    }
-}
-
-function handleForgotPassword(event) {
-    event.preventDefault();
-    if (window.authSystem) {
-        return window.authSystem.forgotPassword(event);
-    }
-}
-
-function openAuthModal(type) {
-    if (window.openAuthModal) {
-        window.openAuthModal(type);
-    }
-}
-
-function switchAuth(type) {
-    if (window.switchAuth) {
-        window.switchAuth(type);
-    }
-}
-
-function openForgotPassword() {
-    if (window.openForgotPassword) {
-        window.openForgotPassword();
-    }
-}
-
-function toggleUserDropdown() {
-    if (window.toggleUserDropdown) {
-        window.toggleUserDropdown();
-    }
-}
-
-function logout() {
-    if (window.authSystem) {
-        window.authSystem.logout();
-    }
-}
-
-// Initialize when DOM is loaded
+// Initialize the link shortener when the page loads
+let linkShortener;
 document.addEventListener('DOMContentLoaded', () => {
-    window.linkShortener = new LinkShortener();
+    linkShortener = new LinkShortener();
 });

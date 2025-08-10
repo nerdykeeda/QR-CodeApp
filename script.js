@@ -4,9 +4,137 @@ class VCardGenerator {
     constructor() {
         this.profileImageData = null;
         this.cameraStream = null;
+        this.qrLogoData = null; // Store QR logo data
         this.initializeEventListeners();
         this.setupFormValidation();
         this.initializeModals();
+        this.updatePremiumFeatures(); // Call this when the page loads
+    }
+
+    // Check if user has premium access
+    isPremiumUser() {
+        const currentUser = JSON.parse(localStorage.getItem('linqrius_user') || sessionStorage.getItem('linqrius_user') || 'null');
+        if (!currentUser) return false;
+        
+        // Enable all premium features for testing email
+        if (currentUser.email === 'spvinodmandan@gmail.com') {
+            return true;
+        }
+        
+        // Check if user has active premium subscription
+        const premiumUsers = JSON.parse(localStorage.getItem('linqrius_premium_users') || '[]');
+        return premiumUsers.some(user => user.email === currentUser.email && user.isActive);
+    }
+
+    // Update premium features visibility
+    updatePremiumFeatures() {
+        const isPremium = this.isPremiumUser();
+        const premiumElements = document.querySelectorAll('.premium-badge, .premium-notice');
+        
+        premiumElements.forEach(element => {
+            if (isPremium) {
+                element.style.display = 'none';
+            } else {
+                element.style.display = 'inline-block';
+            }
+        });
+
+        // Update logo upload area
+        const logoUploadArea = document.getElementById('logoUploadArea');
+        if (logoUploadArea) {
+            if (isPremium) {
+                logoUploadArea.style.opacity = '1';
+                logoUploadArea.style.pointerEvents = 'auto';
+            } else {
+                logoUploadArea.style.opacity = '0.6';
+                logoUploadArea.style.pointerEvents = 'none';
+            }
+        }
+    }
+
+    // Handle QR logo upload
+    handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check file size (2MB limit)
+        if (file.size > 2 * 1024 * 1024) {
+            showNotification('Logo file size must be less than 2MB', 'error');
+            return;
+        }
+
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            showNotification('Please select a valid image file', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.qrLogoData = e.target.result;
+            this.updateLogoPreview();
+            showNotification('Logo uploaded successfully!', 'success');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Update logo preview
+    updateLogoPreview() {
+        const logoPreview = document.getElementById('logoPreview');
+        const uploadPlaceholder = document.querySelector('#logoUploadArea .upload-placeholder');
+        const removeLogoBtn = document.getElementById('removeLogoBtn');
+        
+        if (this.qrLogoData) {
+            logoPreview.src = this.qrLogoData;
+            logoPreview.style.display = 'block';
+            if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+            if (removeLogoBtn) removeLogoBtn.style.display = 'block';
+        } else {
+            logoPreview.style.display = 'none';
+            if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
+            if (removeLogoBtn) removeLogoBtn.style.display = 'none';
+        }
+    }
+
+    // Remove QR logo
+    removeQRLogo() {
+        this.qrLogoData = null;
+        this.updateLogoPreview();
+        document.getElementById('qrLogo').value = '';
+        showNotification('Logo removed successfully', 'info');
+    }
+
+    // Helper method to finish QR code generation
+    finishQRCodeGeneration(canvas, container, resolve) {
+        // Convert canvas to data URL
+        const finalDataUrl = canvas.toDataURL('image/png');
+        
+        // Create image element for display
+        const displayImg = document.createElement('img');
+        displayImg.onload = () => {
+            console.log('Image loaded successfully, dimensions:', displayImg.naturalWidth, 'x', displayImg.naturalHeight);
+            
+            // Clear container and add the image
+            container.innerHTML = '';
+            container.appendChild(displayImg);
+            
+            // Store the data URL for download
+            container.dataset.qrDataUrl = finalDataUrl;
+            
+            console.log('QR Code with logo displayed successfully');
+            resolve();
+        };
+        
+        displayImg.onerror = (error) => {
+            console.error('Image failed to load:', error);
+            reject(new Error('Failed to load QR code image'));
+        };
+        
+        displayImg.src = finalDataUrl;
+        displayImg.style.maxWidth = '100%';
+        displayImg.style.height = 'auto';
+        displayImg.style.borderRadius = '10px';
+        displayImg.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
     }
 
     initializeEventListeners() {
@@ -24,6 +152,21 @@ class VCardGenerator {
         // Upload area click to trigger file input
         document.getElementById('uploadArea').addEventListener('click', () => {
             document.getElementById('profilePicture').click();
+        });
+
+        // Logo upload for QR code center
+        document.getElementById('qrLogo').addEventListener('change', (e) => {
+            this.handleLogoUpload(e);
+        });
+
+        // Logo upload area click to trigger file input
+        document.getElementById('logoUploadArea').addEventListener('click', () => {
+            document.getElementById('qrLogo').click();
+        });
+
+        // Remove logo button
+        document.getElementById('removeLogoBtn').addEventListener('click', () => {
+            this.removeQRLogo();
         });
 
         // Camera functionality
@@ -711,61 +854,68 @@ class VCardGenerator {
                         // Draw QR code
                         ctx.drawImage(qrImg, 0, 0);
                         
-                                                 // Add LinQ logo at bottom right corner
-                         const logoSize = Math.min(qrImg.width, qrImg.height) * 0.08; // 8% of QR size
-                         const logoX = qrImg.width - logoSize - 10; // 10px from right edge
-                         const logoY = qrImg.height - logoSize - 10; // 10px from bottom edge
-                         
-                         // Create LinQ logo text with better visibility
-                         ctx.fillStyle = '#000000';
-                         ctx.font = `bold ${logoSize * 0.6}px Arial`;
-                         ctx.textAlign = 'center';
-                         ctx.textBaseline = 'middle';
-                         
-                         // Add text shadow for better visibility
-                         ctx.shadowColor = '#ffffff';
-                         ctx.shadowBlur = 3;
-                         ctx.shadowOffsetX = 1;
-                         ctx.shadowOffsetY = 1;
-                         
-                         // Add "LinQ" text
-                         ctx.fillText('LinQ', logoX + logoSize/2, logoY + logoSize/2);
-                         
-                         // Reset shadow
-                         ctx.shadowColor = 'transparent';
-                         ctx.shadowBlur = 0;
-                         ctx.shadowOffsetX = 0;
-                         ctx.shadowOffsetY = 0;
-                        
-                        // Convert canvas to data URL
-                        const finalDataUrl = canvas.toDataURL('image/png');
-                        
-                        // Create image element for display
-                        const displayImg = document.createElement('img');
-                        displayImg.onload = () => {
-                            console.log('Image loaded successfully, dimensions:', displayImg.naturalWidth, 'x', displayImg.naturalHeight);
+                        // Add user's logo in the center if available and user is premium
+                        if (this.qrLogoData && this.isPremiumUser()) {
+                            const logoImg = new Image();
+                            logoImg.onload = () => {
+                                // Calculate logo size (15% of QR code size)
+                                const logoSize = Math.min(qrImg.width, qrImg.height) * 0.15;
+                                const logoX = (qrImg.width - logoSize) / 2;
+                                const logoY = (qrImg.height - logoSize) / 2;
+                                
+                                // Create a circular mask for the logo
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, 2 * Math.PI);
+                                ctx.clip();
+                                
+                                // Draw the logo
+                                ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                                
+                                // Restore context
+                                ctx.restore();
+                                
+                                // Add a subtle border around the logo
+                                ctx.strokeStyle = '#ffffff';
+                                ctx.lineWidth = 3;
+                                ctx.beginPath();
+                                ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, 2 * Math.PI);
+                                ctx.stroke();
+                                
+                                // Continue with the rest of the process
+                                this.finishQRCodeGeneration(canvas, container, resolve);
+                            };
+                            logoImg.src = this.qrLogoData;
+                        } else {
+                            // Add LinQ logo at bottom right corner (default)
+                            const logoSize = Math.min(qrImg.width, qrImg.height) * 0.08; // 8% of QR size
+                            const logoX = qrImg.width - logoSize - 10; // 10px from right edge
+                            const logoY = qrImg.height - logoSize - 10; // 10px from bottom edge
                             
-                            // Clear container and add the image
-                            container.innerHTML = '';
-                            container.appendChild(displayImg);
+                            // Create LinQ logo text with better visibility
+                            ctx.fillStyle = '#000000';
+                            ctx.font = `bold ${logoSize * 0.6}px Arial`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
                             
-                            // Store the data URL for download
-                            container.dataset.qrDataUrl = finalDataUrl;
+                            // Add text shadow for better visibility
+                            ctx.shadowColor = '#ffffff';
+                            ctx.shadowBlur = 3;
+                            ctx.shadowOffsetX = 1;
+                            ctx.shadowOffsetY = 1;
                             
-                            console.log('QR Code with LinQ logo displayed successfully');
-                            resolve();
-                        };
-                        
-                        displayImg.onerror = (error) => {
-                            console.error('Image failed to load:', error);
-                            reject(new Error('Failed to load QR code image'));
-                        };
-                        
-                        displayImg.src = finalDataUrl;
-                        displayImg.style.maxWidth = '100%';
-                        displayImg.style.height = 'auto';
-                        displayImg.style.borderRadius = '10px';
-                        displayImg.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                            // Add "LinQ" text
+                            ctx.fillText('LinQ', logoX + logoSize/2, logoY + logoSize/2);
+                            
+                            // Reset shadow
+                            ctx.shadowColor = 'transparent';
+                            ctx.shadowBlur = 0;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                            
+                            // Continue with the rest of the process
+                            this.finishQRCodeGeneration(canvas, container, resolve);
+                        }
                     };
                     
                     qrImg.onerror = (error) => {
@@ -802,53 +952,68 @@ class VCardGenerator {
                                 canvas.height = qrImg.height;
                                 ctx.drawImage(qrImg, 0, 0);
                                 
-                                                                 // Add LinQ logo
-                                 const logoSize = Math.min(qrImg.width, qrImg.height) * 0.08;
-                                 const logoX = qrImg.width - logoSize - 10;
-                                 const logoY = qrImg.height - logoSize - 10;
-                                 
-                                 // Create LinQ logo text with better visibility
-                                 ctx.fillStyle = '#000000';
-                                 ctx.font = `bold ${logoSize * 0.6}px Arial`;
-                                 ctx.textAlign = 'center';
-                                 ctx.textBaseline = 'middle';
-                                 
-                                 // Add text shadow for better visibility
-                                 ctx.shadowColor = '#ffffff';
-                                 ctx.shadowBlur = 3;
-                                 ctx.shadowOffsetX = 1;
-                                 ctx.shadowOffsetY = 1;
-                                 
-                                 // Add "LinQ" text
-                                 ctx.fillText('LinQ', logoX + logoSize/2, logoY + logoSize/2);
-                                 
-                                 // Reset shadow
-                                 ctx.shadowColor = 'transparent';
-                                 ctx.shadowBlur = 0;
-                                 ctx.shadowOffsetX = 0;
-                                 ctx.shadowOffsetY = 0;
-                                
-                                const finalDataUrl = canvas.toDataURL('image/png');
-                                
-                                const displayImg = document.createElement('img');
-                                displayImg.onload = () => {
-                                    container.innerHTML = '';
-                                    container.appendChild(displayImg);
-                                    container.dataset.qrDataUrl = finalDataUrl;
-                                    console.log('QR Code generated without profile image due to size constraints');
-                                    resolve();
-                                };
-                                
-                                displayImg.onerror = (error) => {
-                                    console.error('Image failed to load:', error);
-                                    reject(new Error('Failed to load QR code image'));
-                                };
-                                
-                                displayImg.src = finalDataUrl;
-                                displayImg.style.maxWidth = '100%';
-                                displayImg.style.height = 'auto';
-                                displayImg.style.borderRadius = '10px';
-                                displayImg.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                                // Add user's logo in the center if available and user is premium
+                                if (this.qrLogoData && this.isPremiumUser()) {
+                                    const logoImg = new Image();
+                                    logoImg.onload = () => {
+                                        // Calculate logo size (15% of QR code size)
+                                        const logoSize = Math.min(qrImg.width, qrImg.height) * 0.15;
+                                        const logoX = (qrImg.width - logoSize) / 2;
+                                        const logoY = (qrImg.height - logoSize) / 2;
+                                        
+                                        // Create a circular mask for the logo
+                                        ctx.save();
+                                        ctx.beginPath();
+                                        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, 2 * Math.PI);
+                                        ctx.clip();
+                                        
+                                        // Draw the logo
+                                        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                                        
+                                        // Restore context
+                                        ctx.restore();
+                                        
+                                        // Add a subtle border around the logo
+                                        ctx.strokeStyle = '#ffffff';
+                                        ctx.lineWidth = 3;
+                                        ctx.beginPath();
+                                        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, 2 * Math.PI);
+                                        ctx.stroke();
+                                        
+                                        // Continue with the rest of the process
+                                        this.finishQRCodeGeneration(canvas, container, resolve);
+                                    };
+                                    logoImg.src = this.qrLogoData;
+                                } else {
+                                    // Add LinQ logo at bottom right corner (default)
+                                    const logoSize = Math.min(qrImg.width, qrImg.height) * 0.08; // 8% of QR size
+                                    const logoX = qrImg.width - logoSize - 10; // 10px from right edge
+                                    const logoY = qrImg.height - logoSize - 10; // 10px from bottom edge
+                                    
+                                    // Create LinQ logo text with better visibility
+                                    ctx.fillStyle = '#000000';
+                                    ctx.font = `bold ${logoSize * 0.6}px Arial`;
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    
+                                    // Add text shadow for better visibility
+                                    ctx.shadowColor = '#ffffff';
+                                    ctx.shadowBlur = 3;
+                                    ctx.shadowOffsetX = 1;
+                                    ctx.shadowOffsetY = 1;
+                                    
+                                    // Add "LinQ" text
+                                    ctx.fillText('LinQ', logoX + logoSize/2, logoY + logoSize/2);
+                                    
+                                    // Reset shadow
+                                    ctx.shadowColor = 'transparent';
+                                    ctx.shadowBlur = 0;
+                                    ctx.shadowOffsetX = 0;
+                                    ctx.shadowOffsetY = 0;
+                                    
+                                    // Continue with the rest of the process
+                                    this.finishQRCodeGeneration(canvas, container, resolve);
+                                }
                             };
                             
                             qrImg.onerror = (error) => {
@@ -1187,6 +1352,8 @@ document.addEventListener('DOMContentLoaded', () => {
 class AuthSystem {
     constructor() {
         this.currentUser = null;
+        this.requires2FA = false;
+        this.pendingUser = null;
         this.initializeAuth();
     }
 
@@ -1221,6 +1388,24 @@ class AuthSystem {
             });
         }
 
+        // 2FA verification form
+        const twoFAForm = document.getElementById('twoFAForm');
+        if (twoFAForm) {
+            twoFAForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handle2FAVerification();
+            });
+        }
+
+        // 2FA signup form
+        const twoFASignupForm = document.getElementById('twoFASignupForm');
+        if (twoFASignupForm) {
+            twoFASignupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handle2FASignup();
+            });
+        }
+
         // Forgot password form
         const forgotForm = document.getElementById('forgotPasswordFormSubmit');
         if (forgotForm) {
@@ -1231,7 +1416,7 @@ class AuthSystem {
         }
     }
 
-    handleLogin() {
+    async handleLogin() {
         const email = document.getElementById('loginEmail')?.value.trim();
         const password = document.getElementById('loginPassword')?.value;
         const rememberMe = document.getElementById('rememberMe')?.checked;
@@ -1247,35 +1432,90 @@ class AuthSystem {
         const user = users.find(u => u.email === email && u.password === password);
 
         if (user) {
-            this.currentUser = {
-                id: user.id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                createdAt: user.createdAt
-            };
-
-            // Save user session
-            if (rememberMe) {
-                localStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
-            } else {
-                sessionStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
+            // Check if user has 2FA enabled
+            if (user.phoneNumber && user.twoFactorEnabled) {
+                this.pendingUser = {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    createdAt: user.createdAt,
+                    phoneNumber: user.phoneNumber,
+                    rememberMe
+                };
+                
+                // Send SMS verification code
+                const smsResult = await window.smsAuthService.sendSMS(user.phoneNumber);
+                if (smsResult.success) {
+                    this.requires2FA = true;
+                    switchAuth('2fa');
+                    showNotification('SMS verification code sent to your phone', 'success');
+                } else {
+                    showNotification('Failed to send SMS code', 'error');
+                }
+                return;
             }
 
-            this.updateAuthUI();
-            this.closeAuthModal();
-            showNotification(`Welcome back, ${user.firstName}!`, 'success');
+            // No 2FA required, proceed with login
+            this.completeLogin(user, rememberMe);
         } else {
             showNotification('Invalid email or password', 'error');
         }
     }
 
-    handleSignup() {
+    async handle2FAVerification() {
+        const code = document.getElementById('2faCode')?.value.trim();
+        
+        if (!code) {
+            showNotification('Please enter the verification code', 'error');
+            return;
+        }
+
+        if (!this.pendingUser) {
+            showNotification('No pending verification found', 'error');
+            return;
+        }
+
+        const result = window.smsAuthService.verifyCode(this.pendingUser.phoneNumber, code);
+        
+        if (result.success) {
+            this.completeLogin(this.pendingUser, this.pendingUser.rememberMe);
+            this.pendingUser = null;
+            this.requires2FA = false;
+        } else {
+            showNotification(result.message, 'error');
+        }
+    }
+
+    completeLogin(user, rememberMe) {
+        this.currentUser = {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            createdAt: user.createdAt
+        };
+
+        // Save user session
+        if (rememberMe) {
+            localStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
+        } else {
+            sessionStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
+        }
+
+        this.updateAuthUI();
+        this.closeAuthModal();
+        showNotification(`Welcome back, ${user.firstName}!`, 'success');
+    }
+
+    async handleSignup() {
         const firstName = document.getElementById('signupFirstName')?.value.trim();
         const lastName = document.getElementById('signupLastName')?.value.trim();
         const email = document.getElementById('signupEmail')?.value.trim();
+        const phoneNumber = document.getElementById('signupPhone')?.value.trim();
         const password = document.getElementById('signupPassword')?.value;
         const confirmPassword = document.getElementById('signupConfirmPassword')?.value;
+        const enable2FA = document.getElementById('enable2FA')?.checked;
         const agreeTerms = document.getElementById('agreeTerms')?.checked;
 
         // Validation
@@ -1294,6 +1534,11 @@ class AuthSystem {
             return;
         }
 
+        if (enable2FA && !phoneNumber) {
+            showNotification('Phone number is required for 2FA', 'error');
+            return;
+        }
+
         if (!agreeTerms) {
             showNotification('Please agree to the Terms & Conditions', 'error');
             return;
@@ -1306,16 +1551,77 @@ class AuthSystem {
             return;
         }
 
-        // Create new user
+        // If 2FA is enabled, verify phone number first
+        if (enable2FA && phoneNumber) {
+            const smsResult = await window.smsAuthService.sendSMS(phoneNumber);
+            if (smsResult.success) {
+                this.pendingUser = {
+                    firstName,
+                    lastName,
+                    email,
+                    phoneNumber,
+                    password,
+                    enable2FA
+                };
+                this.requires2FA = true;
+                switchAuth('2fa-signup');
+                showNotification('SMS verification code sent to your phone', 'success');
+                return;
+            } else {
+                showNotification('Failed to send SMS code', 'error');
+                return;
+            }
+        }
+
+        // Create new user without 2FA
+        this.createUser(firstName, lastName, email, phoneNumber, password, false);
+    }
+
+    async handle2FASignup() {
+        const code = document.getElementById('2faSignupCode')?.value.trim();
+        
+        if (!code) {
+            showNotification('Please enter the verification code', 'error');
+            return;
+        }
+
+        if (!this.pendingUser) {
+            showNotification('No pending signup found', 'error');
+            return;
+        }
+
+        const result = window.smsAuthService.verifyCode(this.pendingUser.phoneNumber, code);
+        
+        if (result.success) {
+            // Create user with verified phone number
+            this.createUser(
+                this.pendingUser.firstName,
+                this.pendingUser.lastName,
+                this.pendingUser.email,
+                this.pendingUser.phoneNumber,
+                this.pendingUser.password,
+                true
+            );
+            this.pendingUser = null;
+            this.requires2FA = false;
+        } else {
+            showNotification(result.message, 'error');
+        }
+    }
+
+    createUser(firstName, lastName, email, phoneNumber, password, twoFactorEnabled) {
         const newUser = {
             id: Date.now().toString(),
             firstName,
             lastName,
             email,
+            phoneNumber,
             password, // In production, this would be hashed
+            twoFactorEnabled,
             createdAt: new Date().toISOString()
         };
 
+        const users = JSON.parse(localStorage.getItem('linqrius_users') || '[]');
         users.push(newUser);
         localStorage.setItem('linqrius_users', JSON.stringify(users));
 
@@ -1367,6 +1673,11 @@ class AuthSystem {
             if (authButtons) authButtons.style.display = 'flex';
             if (userMenu) userMenu.style.display = 'none';
         }
+
+        // Update premium features visibility
+        if (window.vcardGenerator) {
+            window.vcardGenerator.updatePremiumFeatures();
+        }
     }
 
     logout() {
@@ -1398,11 +1709,15 @@ function switchAuth(type) {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const forgotForm = document.getElementById('forgotPasswordForm');
+    const twoFAForm = document.getElementById('twoFAForm');
+    const twoFASignupForm = document.getElementById('twoFASignupForm');
 
     // Hide all forms
     if (loginForm) loginForm.style.display = 'none';
     if (signupForm) signupForm.style.display = 'none';
     if (forgotForm) forgotForm.style.display = 'none';
+    if (twoFAForm) twoFAForm.style.display = 'none';
+    if (twoFASignupForm) twoFASignupForm.style.display = 'none';
 
     // Show selected form
     switch (type) {
@@ -1414,6 +1729,12 @@ function switchAuth(type) {
             break;
         case 'forgot':
             if (forgotForm) forgotForm.style.display = 'block';
+            break;
+        case '2fa':
+            if (twoFAForm) twoFAForm.style.display = 'block';
+            break;
+        case '2fa-signup':
+            if (twoFASignupForm) twoFASignupForm.style.display = 'block';
             break;
     }
 }
@@ -1442,6 +1763,33 @@ function logout() {
         window.authSystem.logout();
     }
     toggleUserDropdown();
+}
+
+// 2FA resend code functions
+function resend2FACode() {
+    if (window.authSystem && window.authSystem.pendingUser) {
+        window.smsAuthService.resendCode(window.authSystem.pendingUser.phoneNumber)
+            .then(result => {
+                if (result.success) {
+                    showNotification('New verification code sent!', 'success');
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            });
+    }
+}
+
+function resend2FASignupCode() {
+    if (window.authSystem && window.authSystem.pendingUser) {
+        window.smsAuthService.resendCode(window.authSystem.pendingUser.phoneNumber)
+            .then(result => {
+                if (result.success) {
+                    showNotification('New verification code sent!', 'success');
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            });
+    }
 }
 
 // Initialize auth system
