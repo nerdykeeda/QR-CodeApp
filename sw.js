@@ -1,4 +1,4 @@
-const CACHE_NAME = 'linqrius-v1';
+const CACHE_NAME = 'linqrius-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -32,16 +32,38 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  // Activate updated SW immediately
+  self.skipWaiting();
 });
 
 // Fetch event - serve from cache if available
 self.addEventListener('fetch', event => {
+  const { request } = event;
+
+  // Network-first for navigation/HTML to ensure latest content
+  const isNavigation = request.mode === 'navigate' || (request.destination === 'document');
+  const isHTML = request.headers.get('accept')?.includes('text/html');
+
+  if (isNavigation || isHTML) {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(request);
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, networkResponse.clone());
+          return networkResponse;
+        } catch (err) {
+          const cached = await caches.match(request);
+          return cached || caches.match('/index.html');
+        }
+      })()
+    );
+    return;
+  }
+
+  // Cache-first for other assets
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      })
+    caches.match(request).then(cached => cached || fetch(request))
   );
 });
 
@@ -57,6 +79,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });

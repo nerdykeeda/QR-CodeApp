@@ -154,6 +154,14 @@ class VCardGenerator {
             document.getElementById('profilePicture').click();
         });
 
+        // Explicit upload button
+        const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+        if (uploadPhotoBtn) {
+            uploadPhotoBtn.addEventListener('click', () => {
+                document.getElementById('profilePicture').click();
+            });
+        }
+
         // Logo upload for QR code center
         document.getElementById('qrLogo').addEventListener('change', (e) => {
             this.handleLogoUpload(e);
@@ -186,6 +194,14 @@ class VCardGenerator {
         document.getElementById('retakeBtn').addEventListener('click', () => {
             this.retakePhoto();
         });
+
+        // Use captured photo
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
+        if (usePhotoBtn) {
+            usePhotoBtn.addEventListener('click', () => {
+                this.applyCapturedPhoto();
+            });
+        }
 
         // Crop modal controls
         document.getElementById('cropSaveBtn').addEventListener('click', () => {
@@ -270,6 +286,8 @@ class VCardGenerator {
         const retakeBtn = document.getElementById('retakeBtn');
         if (captureBtn) captureBtn.style.display = 'block';
         if (retakeBtn) retakeBtn.style.display = 'none';
+        
+        document.body.classList.remove('modal-open'); // when closing modal
     }
 
     setupFormValidation() {
@@ -312,7 +330,7 @@ class VCardGenerator {
         try {
             // Check if camera permissions are available
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Camera is not supported in this browser. Please use a modern browser with camera support.');
+                alert('Camera is not supported in this browser. Please use a modern browser with camera support or try uploading a photo.');
                 return;
             }
             
@@ -326,6 +344,10 @@ class VCardGenerator {
             
             const video = document.getElementById('cameraVideo');
             video.srcObject = this.cameraStream;
+            // iOS Safari requires play() to be called and playsinline is set in markup
+            if (typeof video.play === 'function') {
+                try { await video.play(); } catch (_) {}
+            }
             
             // Wait for video to be ready
             await new Promise((resolve) => {
@@ -336,14 +358,16 @@ class VCardGenerator {
             document.getElementById('captureBtn').style.display = 'block';
             document.getElementById('retakeBtn').style.display = 'none';
             
+            document.body.classList.add('modal-open');   // when opening modal
+            
         } catch (error) {
             console.error('Error accessing camera:', error);
             if (error.name === 'NotAllowedError') {
-                alert('Camera access was denied. Please allow camera permissions and try again.');
+                alert('Camera access was denied. Please allow camera permissions in your browser settings or upload a photo instead.');
             } else if (error.name === 'NotFoundError') {
-                alert('No camera found. Please connect a camera and try again.');
+                alert('No camera found. Please connect a camera or upload a photo instead.');
             } else {
-                alert('Unable to access camera. Please make sure you have granted camera permissions.');
+                alert('Unable to access camera. Please ensure permissions are granted or upload a photo instead.');
             }
         }
     }
@@ -376,6 +400,8 @@ class VCardGenerator {
         // Update buttons
         document.getElementById('captureBtn').style.display = 'none';
         document.getElementById('retakeBtn').style.display = 'block';
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
+        if (usePhotoBtn) usePhotoBtn.style.display = 'block';
         
         // Store the photo data
         this.capturedPhotoData = photoData;
@@ -390,6 +416,34 @@ class VCardGenerator {
         
         document.getElementById('captureBtn').style.display = 'block';
         document.getElementById('retakeBtn').style.display = 'none';
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
+        if (usePhotoBtn) usePhotoBtn.style.display = 'none';
+    }
+
+    applyCapturedPhoto() {
+        if (!this.capturedPhotoData) {
+            alert('Please capture a photo first.');
+            return;
+        }
+        this.profileImageData = this.capturedPhotoData;
+        this.updateProfilePreview();
+        // Reveal camera/crop options after applying
+        if (typeof this.showCameraOptions === 'function') {
+            this.showCameraOptions();
+        }
+        // Close camera modal and stop stream
+        const cameraModal = document.getElementById('cameraModal');
+        if (cameraModal) cameraModal.style.display = 'none';
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        document.body.classList.remove('modal-open');
+        // Reset buttons for next open
+        document.getElementById('captureBtn').style.display = 'block';
+        document.getElementById('retakeBtn').style.display = 'none';
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
+        if (usePhotoBtn) usePhotoBtn.style.display = 'none';
     }
 
     openCropModal() {
@@ -407,6 +461,8 @@ class VCardGenerator {
         cropImage.onload = () => {
             this.initializeCrop();
         };
+        
+        document.body.classList.add('modal-open');   // when opening modal
     }
 
     initializeCrop() {
@@ -551,6 +607,7 @@ class VCardGenerator {
 
     closeCropModal() {
         document.getElementById('cropModal').style.display = 'none';
+        document.body.classList.remove('modal-open'); // when closing modal
     }
 
     handleProfilePictureUpload(event) {
@@ -1354,65 +1411,71 @@ class AuthSystem {
         this.currentUser = null;
         this.requires2FA = false;
         this.pendingUser = null;
-        this.initializeAuth();
+        this.baseUrl = window.location.origin;
+        this.init();
     }
 
-    initializeAuth() {
-        // Check if user is already logged in
-        const savedUser = localStorage.getItem('linqrius_user');
-        if (savedUser) {
-            this.currentUser = JSON.parse(savedUser);
-            this.updateAuthUI();
+    init() {
+        // Check for existing session
+        const token = localStorage.getItem('linqrius_token');
+        if (token) {
+            this.validateToken(token);
+        }
+        this.updateAuthUI();
+    }
+
+    async validateToken(token) {
+        try {
+            // In a real app, you'd validate the JWT token with the server
+            // For now, we'll check if the token exists and is not expired
+            const tokenData = this.parseJWT(token);
+            if (tokenData && tokenData.exp > Date.now() / 1000) {
+                this.currentUser = {
+                    id: tokenData.userId,
+                    email: tokenData.email
+                };
+                // Fetch user details from server
+                await this.fetchUserDetails();
+                return true;
+            }
+        } catch (error) {
+            console.error('Token validation error:', error);
         }
         
-        // Initialize auth form listeners
-        this.initializeAuthForms();
+        // Token invalid, clear it
+        localStorage.removeItem('linqrius_token');
+        this.currentUser = null;
+        return false;
     }
 
-    initializeAuthForms() {
-        // Login form
-        const loginForm = document.getElementById('loginFormSubmit');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleLogin();
-            });
+    parseJWT(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (error) {
+            return null;
         }
+    }
 
-        // Signup form
-        const signupForm = document.getElementById('signupFormSubmit');
-        if (signupForm) {
-            signupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleSignup();
+    async fetchUserDetails() {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/auth/user`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('linqrius_token')}`
+                }
             });
-        }
-
-        // 2FA verification form
-        const twoFAForm = document.getElementById('twoFAForm');
-        if (twoFAForm) {
-            twoFAForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handle2FAVerification();
-            });
-        }
-
-        // 2FA signup form
-        const twoFASignupForm = document.getElementById('twoFASignupForm');
-        if (twoFASignupForm) {
-            twoFASignupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handle2FASignup();
-            });
-        }
-
-        // Forgot password form
-        const forgotForm = document.getElementById('forgotPasswordFormSubmit');
-        if (forgotForm) {
-            forgotForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleForgotPassword();
-            });
+            
+            if (response.ok) {
+                const userData = await response.json();
+                this.currentUser = { ...this.currentUser, ...userData };
+                this.updateAuthUI();
+            }
+        } catch (error) {
+            console.error('Error fetching user details:', error);
         }
     }
 
@@ -1426,86 +1489,47 @@ class AuthSystem {
             return;
         }
 
-        // Simple validation for demo purposes
-        // In production, this would be a real API call
-        const users = JSON.parse(localStorage.getItem('linqrius_users') || '[]');
-        const user = users.find(u => u.email === email && u.password === password);
+        try {
+            const response = await fetch(`${this.baseUrl}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (user) {
-            // Check if user has 2FA enabled
-            if (user.phoneNumber && user.twoFactorEnabled) {
-                this.pendingUser = {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    createdAt: user.createdAt,
-                    phoneNumber: user.phoneNumber,
-                    rememberMe
-                };
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Store token
+                localStorage.setItem('linqrius_token', data.token);
                 
-                // Send SMS verification code
-                const smsResult = await window.smsAuthService.sendSMS(user.phoneNumber);
-                if (smsResult.success) {
+                // Set current user
+                this.currentUser = data.user;
+                
+                // Update UI
+                this.updateAuthUI();
+                this.closeAuthModal();
+                
+                showNotification(`Welcome back, ${data.user.firstName}!`, 'success');
+                
+                // Check if 2FA is required
+                if (data.user.twoFactorEnabled) {
                     this.requires2FA = true;
-                    switchAuth('2fa');
-                    showNotification('SMS verification code sent to your phone', 'success');
-                } else {
-                    showNotification('Failed to send SMS code', 'error');
+                    switchAuth('2fa-login');
+                    // Send SMS code
+                    const smsResult = await window.smsAuthService.sendSMS(data.user.phoneNumber);
+                    if (smsResult.success) {
+                        showNotification('SMS verification code sent to your phone', 'success');
+                    }
                 }
-                return;
+            } else {
+                showNotification(data.error || 'Login failed', 'error');
             }
-
-            // No 2FA required, proceed with login
-            this.completeLogin(user, rememberMe);
-        } else {
-            showNotification('Invalid email or password', 'error');
+        } catch (error) {
+            console.error('Login error:', error);
+            showNotification('Login failed. Please try again.', 'error');
         }
-    }
-
-    async handle2FAVerification() {
-        const code = document.getElementById('2faCode')?.value.trim();
-        
-        if (!code) {
-            showNotification('Please enter the verification code', 'error');
-            return;
-        }
-
-        if (!this.pendingUser) {
-            showNotification('No pending verification found', 'error');
-            return;
-        }
-
-        const result = window.smsAuthService.verifyCode(this.pendingUser.phoneNumber, code);
-        
-        if (result.success) {
-            this.completeLogin(this.pendingUser, this.pendingUser.rememberMe);
-            this.pendingUser = null;
-            this.requires2FA = false;
-        } else {
-            showNotification(result.message, 'error');
-        }
-    }
-
-    completeLogin(user, rememberMe) {
-        this.currentUser = {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            createdAt: user.createdAt
-        };
-
-        // Save user session
-        if (rememberMe) {
-            localStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
-        } else {
-            sessionStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
-        }
-
-        this.updateAuthUI();
-        this.closeAuthModal();
-        showNotification(`Welcome back, ${user.firstName}!`, 'success');
     }
 
     async handleSignup() {
@@ -1544,37 +1568,50 @@ class AuthSystem {
             return;
         }
 
-        // Check if user already exists
-        const users = JSON.parse(localStorage.getItem('linqrius_users') || '[]');
-        if (users.some(u => u.email === email)) {
-            showNotification('An account with this email already exists', 'error');
-            return;
-        }
-
-        // If 2FA is enabled, verify phone number first
-        if (enable2FA && phoneNumber) {
-            const smsResult = await window.smsAuthService.sendSMS(phoneNumber);
-            if (smsResult.success) {
-                this.pendingUser = {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     firstName,
                     lastName,
                     email,
-                    phoneNumber,
                     password,
+                    phoneNumber: enable2FA ? phoneNumber : undefined,
                     enable2FA
-                };
-                this.requires2FA = true;
-                switchAuth('2fa-signup');
-                showNotification('SMS verification code sent to your phone', 'success');
-                return;
-            } else {
-                showNotification('Failed to send SMS code', 'error');
-                return;
-            }
-        }
+                })
+            });
 
-        // Create new user without 2FA
-        this.createUser(firstName, lastName, email, phoneNumber, password, false);
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                if (enable2FA && phoneNumber) {
+                    // Store pending user data for 2FA verification
+                    this.pendingUser = data.user;
+                    this.requires2FA = true;
+                    switchAuth('2fa-signup');
+                    
+                    // Send SMS verification code
+                    const smsResult = await window.smsAuthService.sendSMS(phoneNumber);
+                    if (smsResult.success) {
+                        showNotification('SMS verification code sent to your phone', 'success');
+                    } else {
+                        showNotification('Failed to send SMS code', 'error');
+                    }
+                } else {
+                    // Auto-login for users without 2FA
+                    showNotification(`Welcome to LinQrius, ${firstName}!`, 'success');
+                    switchAuth('login');
+                }
+            } else {
+                showNotification(data.error || 'Registration failed', 'error');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            showNotification('Registration failed. Please try again.', 'error');
+        }
     }
 
     async handle2FASignup() {
@@ -1593,66 +1630,51 @@ class AuthSystem {
         const result = window.smsAuthService.verifyCode(this.pendingUser.phoneNumber, code);
         
         if (result.success) {
-            // Create user with verified phone number
-            this.createUser(
-                this.pendingUser.firstName,
-                this.pendingUser.lastName,
-                this.pendingUser.email,
-                this.pendingUser.phoneNumber,
-                this.pendingUser.password,
-                true
-            );
+            // Complete registration with verified phone number
+            this.currentUser = this.pendingUser;
             this.pendingUser = null;
             this.requires2FA = false;
+            
+            this.updateAuthUI();
+            this.closeAuthModal();
+            showNotification(`Welcome to LinQrius, ${this.currentUser.firstName}!`, 'success');
         } else {
             showNotification(result.message, 'error');
         }
     }
 
-    createUser(firstName, lastName, email, phoneNumber, password, twoFactorEnabled) {
-        const newUser = {
-            id: Date.now().toString(),
-            firstName,
-            lastName,
-            email,
-            phoneNumber,
-            password, // In production, this would be hashed
-            twoFactorEnabled,
-            createdAt: new Date().toISOString()
-        };
-
-        const users = JSON.parse(localStorage.getItem('linqrius_users') || '[]');
-        users.push(newUser);
-        localStorage.setItem('linqrius_users', JSON.stringify(users));
-
-        // Auto-login the new user
-        this.currentUser = {
-            id: newUser.id,
-            email: newUser.email,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-            createdAt: newUser.createdAt
-        };
-
-        localStorage.setItem('linqrius_user', JSON.stringify(this.currentUser));
-        this.updateAuthUI();
-        this.closeAuthModal();
-        showNotification(`Welcome to LinQrius, ${firstName}!`, 'success');
-    }
-
-    handleForgotPassword() {
-        const email = document.getElementById('forgotEmail')?.value.trim();
-
-        if (!email) {
-            showNotification('Please enter your email address', 'error');
+    async handle2FALogin() {
+        const code = document.getElementById('2faLoginCode')?.value.trim();
+        
+        if (!code) {
+            showNotification('Please enter the verification code', 'error');
             return;
         }
 
-        // In production, this would send a real email
-        showNotification('Password reset link sent to your email!', 'success');
-        setTimeout(() => {
-            switchAuth('login');
-        }, 2000);
+        if (!this.currentUser?.phoneNumber) {
+            showNotification('No phone number found for 2FA', 'error');
+            return;
+        }
+
+        const result = window.smsAuthService.verifyCode(this.currentUser.phoneNumber, code);
+        
+        if (result.success) {
+            this.requires2FA = false;
+            this.updateAuthUI();
+            this.closeAuthModal();
+            showNotification('2FA verification successful!', 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    }
+
+    logout() {
+        this.currentUser = null;
+        this.requires2FA = false;
+        this.pendingUser = null;
+        localStorage.removeItem('linqrius_token');
+        this.updateAuthUI();
+        showNotification('Logged out successfully', 'success');
     }
 
     updateAuthUI() {
@@ -1661,38 +1683,80 @@ class AuthSystem {
         const userName = document.getElementById('userName');
 
         if (this.currentUser) {
-            // User is logged in
             if (authButtons) authButtons.style.display = 'none';
             if (userMenu) {
-                userMenu.style.display = 'flex';
-                userMenu.style.alignItems = 'center';
+                userMenu.style.display = 'block';
+                if (userName) userName.textContent = `${this.currentUser.firstName} ${this.currentUser.lastName}`;
             }
-            if (userName) userName.textContent = this.currentUser.firstName;
         } else {
-            // User is not logged in
             if (authButtons) authButtons.style.display = 'flex';
             if (userMenu) userMenu.style.display = 'none';
         }
-
-        // Update premium features visibility
-        if (window.vcardGenerator) {
-            window.vcardGenerator.updatePremiumFeatures();
-        }
-    }
-
-    logout() {
-        this.currentUser = null;
-        localStorage.removeItem('linqrius_user');
-        sessionStorage.removeItem('linqrius_user');
-        this.updateAuthUI();
-        showNotification('Successfully logged out', 'info');
     }
 
     closeAuthModal() {
-        const authModal = document.getElementById('authModal');
-        if (authModal) {
-            authModal.style.display = 'none';
+        const modal = document.getElementById('authModal');
+        if (modal) {
+            modal.style.display = 'none';
         }
+        
+        document.body.classList.remove('modal-open'); // when closing modal
+    }
+
+    // Premium plan management
+    async upgradeToPremium(plan) {
+        if (!this.currentUser) {
+            showNotification('Please log in to upgrade your plan', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.baseUrl}/api/subscription/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': 'sk-linqrius-2024-secure-key-12345'
+                },
+                body: JSON.stringify({
+                    userId: this.currentUser.id,
+                    plan
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Redirect to Stripe checkout
+                window.location.href = data.checkoutUrl;
+            } else {
+                showNotification(data.error || 'Failed to create subscription', 'error');
+            }
+        } catch (error) {
+            console.error('Premium upgrade error:', error);
+            showNotification('Premium upgrade failed. Please try again.', 'error');
+        }
+    }
+
+    // Check premium status
+    async checkPremiumStatus() {
+        if (!this.currentUser) return false;
+
+        try {
+            const response = await fetch(`${this.baseUrl}/api/user/premium-status`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('linqrius_token')}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.isPremium;
+            }
+        } catch (error) {
+            console.error('Premium status check error:', error);
+        }
+
+        return false;
     }
 }
 
@@ -1701,6 +1765,7 @@ function openAuthModal(type) {
     const authModal = document.getElementById('authModal');
     if (authModal) {
         authModal.style.display = 'block';
+        document.body.classList.add('modal-open'); // <-- Add this line
         switchAuth(type);
     }
 }

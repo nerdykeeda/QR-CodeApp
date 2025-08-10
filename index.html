@@ -34,21 +34,23 @@
                     <h1><i class="fas fa-qrcode"></i> LinQrius</h1>
                     <p>Create your digital visiting card with QR code</p>
                 </div>
-                <nav class="nav-menu">
-                    <ul>
-                        <li><a href="index.html" class="active"><i class="fas fa-home"></i> Home</a></li>
-                        <li><a href="index.html" class="active"><i class="fas fa-qrcode"></i> VCard QR</a></li>
-                        <li><a href="link-shorten.html"><i class="fas fa-link"></i> Link Shorten</a></li>
-                        <li><a href="cliqart.html"><i class="fas fa-store"></i> LinQart</a></li>
-                    </ul>
-                </nav>
-                <div class="auth-buttons" id="authButtons">
-                    <button class="auth-btn login-btn" onclick="openAuthModal('login')">
-                        <i class="fas fa-sign-in-alt"></i> Sign In
-                    </button>
-                    <button class="auth-btn signup-btn" onclick="openAuthModal('signup')">
-                        <i class="fas fa-user-plus"></i> Sign Up
-                    </button>
+                <div class="header-right">
+                    <nav class="nav-menu">
+                        <ul>
+                            <li><a href="index.html" class="active"><i class="fas fa-home"></i> Home</a></li>
+                            <li><a href="index.html" class="active"><i class="fas fa-qrcode"></i> VCard QR</a></li>
+                            <li><a href="link-shorten.html"><i class="fas fa-link"></i> Link Shorten</a></li>
+                            <li><a href="cliqart.html"><i class="fas fa-store"></i> LinQart</a></li>
+                        </ul>
+                    </nav>
+                    <div class="auth-buttons" id="authButtons">
+                        <button class="auth-btn login-btn" onclick="openAuthModal('login')">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                        <button class="auth-btn signup-btn" onclick="openAuthModal('signup')">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </button>
+                    </div>
                 </div>
                 <div class="user-menu" id="userMenu" style="display: none;">
                     <div class="user-info">
@@ -78,13 +80,16 @@
                         <div class="upload-area" id="uploadArea">
                             <div class="upload-placeholder">
                                 <i class="fas fa-camera"></i>
-                                <p>Click to upload profile picture</p>
+                                <p>Upload or capture profile picture</p>
                                 <span>JPG, PNG, GIF up to 5MB</span>
                             </div>
                             <img id="profilePreview" class="profile-preview" style="display: none;" />
                             <input type="file" id="profilePicture" accept="image/*" style="display: none;">
                         </div>
-                        <div class="camera-options" style="display: none;">
+                        <div class="camera-options">
+                            <button type="button" id="uploadPhotoBtn" class="camera-btn">
+                                <i class="fas fa-upload"></i> Upload Photo
+                            </button>
                             <button type="button" id="takePhotoBtn" class="camera-btn">
                                 <i class="fas fa-camera"></i> Take Photo
                             </button>
@@ -97,7 +102,7 @@
                             <div class="modal-content">
                                 <span class="close">&times;</span>
                                 <h3>Take Photo</h3>
-                                <video id="cameraVideo" autoplay></video>
+                                <video id="cameraVideo" autoplay playsinline></video>
                                 <canvas id="cameraCanvas" style="display: none;"></canvas>
                                 <div class="camera-controls">
                                     <button type="button" id="captureBtn" class="camera-btn">
@@ -106,6 +111,9 @@
                                     <button type="button" id="retakeBtn" class="camera-btn" style="display: none;">
                                         <i class="fas fa-redo"></i> Retake
                                     </button>
+                                     <button type="button" id="usePhotoBtn" class="camera-btn" style="display: none;">
+                                         <i class="fas fa-check"></i> Use Photo
+                                     </button>
                                 </div>
                             </div>
                         </div>

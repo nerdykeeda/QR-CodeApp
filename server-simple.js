@@ -1,271 +1,395 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config();
+
+// Import services
+const PaymentService = require('./payment-service');
+const { requirePremium, checkPremiumFeatures } = require('./premium-middleware');
+// const storeRoutes = require('./store-routes'); // temporarily disabled
+
+// In-memory storage
+const inMemoryUsers = new Map();
+const inMemoryStores = new Map();
+const inMemoryLinks = new Map();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
-// API Key Configuration
+// Initialize payment service
+const paymentService = new PaymentService();
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname)));
+
+// API Key authentication
 const API_KEYS = {
-    // You can add multiple API keys for different users/clients
     'linqrius-main': 'sk-linqrius-2024-secure-key-12345',
     'linqrius-admin': 'sk-linqrius-admin-2024-67890',
     'linqrius-test': 'sk-linqrius-test-2024-abcde'
 };
 
-// API Key Authentication Middleware
 const authenticateApiKey = (req, res, next) => {
     const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
-    
     if (!apiKey) {
-        return res.status(401).json({ 
-            error: 'API key required',
-            message: 'Please provide an API key in the X-API-Key header or Authorization header'
-        });
+        return res.status(401).json({ error: 'API key required' });
     }
     
-    // Check if API key exists
-    const validKey = Object.values(API_KEYS).find(key => key === apiKey);
-    if (!validKey) {
-        return res.status(403).json({ 
-            error: 'Invalid API key',
-            message: 'The provided API key is not valid'
-        });
+    const keyName = Object.keys(API_KEYS).find(key => API_KEYS[key] === apiKey);
+    if (!keyName) {
+        return res.status(403).json({ error: 'Invalid API key' });
     }
     
-    // Add API key info to request for logging
-    const keyName = Object.keys(API_KEYS).find(name => API_KEYS[name] === apiKey);
     req.apiKeyInfo = { keyName, key: apiKey };
-    
     console.log(`🔑 API request authenticated with key: ${keyName}`);
     next();
 };
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.static('.')); // Serve static files
+// In-memory storage initialized
+console.log('💾 In-memory storage initialized');
 
-// In-memory storage (for testing - will reset when server restarts)
-let links = [];
-let nextId = 1;
+// Store routes (for functional store URLs) - temporarily disabled for testing
+// app.use('/', storeRoutes);
 
-console.log('🚀 LinQrius server starting with in-memory storage...');
-console.log('🔑 API Key authentication enabled');
-console.log(`📋 Available API Keys: ${Object.keys(API_KEYS).join(', ')}`);
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        database: 'in-memory',
+        totalUsers: inMemoryUsers.size,
+        totalStores: inMemoryStores.size,
+        totalLinks: inMemoryLinks.size,
+        apiKeyAuth: 'enabled',
+        totalApiKeys: Object.keys(API_KEYS).length,
+        premiumFeatures: 'enabled'
+    });
+});
 
-// API Routes - Protected with API Key Authentication
+// API Key management
+app.get('/api/keys', authenticateApiKey, (req, res) => {
+    if (req.apiKeyInfo.keyName !== 'linqrius-admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    res.json({
+        keys: Object.keys(API_KEYS).map(key => ({
+            name: key,
+            permissions: key === 'linqrius-admin' ? ['all'] : ['create-links', 'read-links', 'delete-own-links']
+        }))
+    });
+});
 
-// Create short link
-app.post('/api/links', authenticateApiKey, async (req, res) => {
+// User authentication endpoints
+app.post('/api/auth/register', async (req, res) => {
     try {
-        console.log('Received request body:', req.body);
-        console.log('Request headers:', req.headers);
+        const { firstName, lastName, email, password, phoneNumber, enable2FA } = req.body;
         
-        const { originalUrl, customAlias } = req.body;
-        
-        if (!originalUrl) {
-            return res.status(400).json({ error: 'Original URL is required' });
+        // Check if user exists
+        if (inMemoryUsers.has(email)) {
+            return res.status(400).json({ error: 'User already exists' });
         }
         
-        // Generate or use custom short code
-        let shortCode = customAlias;
-        if (!shortCode) {
-            shortCode = generateShortCode();
-            // Ensure uniqueness
-            while (links.find(l => l.shortCode === shortCode)) {
-                shortCode = generateShortCode();
-            }
-        } else {
-            // Check if custom alias already exists
-            const existing = links.find(l => l.shortCode === customAlias.toUpperCase());
-            if (existing) {
-                return res.status(400).json({ error: 'Custom alias already exists' });
-            }
-        }
+        // Hash password
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(password, 12);
         
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const shortUrl = `${baseUrl}/r/${shortCode}`;
-        const displayUrl = `LinQ/${shortCode}`;
-        
-        const link = {
-            id: nextId++,
-            shortCode: shortCode.toUpperCase(),
-            originalUrl,
-            displayUrl,
-            shortUrl,
-            clicks: 0,
-            createdAt: new Date(),
-            isActive: true
+        // Create user
+        const userId = Date.now().toString();
+        const user = {
+            id: userId,
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            phoneNumber: enable2FA ? phoneNumber : undefined,
+            twoFactorEnabled: enable2FA || false,
+            plan: 'free',
+            createdAt: new Date()
         };
         
-        links.unshift(link);
+        inMemoryUsers.set(email, user);
         
-        console.log('Link created successfully:', link);
+        res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            user: {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                plan: user.plan
+            }
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Registration failed', details: error.message });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Find user
+        const user = inMemoryUsers.get(email);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        // Check password
+        const bcrypt = require('bcryptjs');
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        // Update last login
+        user.lastLogin = new Date();
+        
+        // Generate JWT token
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+            { userId: user.id, email: user.email },
+            process.env.JWT_SECRET || 'linqrius-secret-key',
+            { expiresIn: '7d' }
+        );
         
         res.json({
-            id: link.id,
-            originalUrl: link.originalUrl,
+            success: true,
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                plan: user.plan,
+                planExpiry: user.planExpiry
+            },
+            token
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed', details: error.message });
+    }
+});
+
+// Premium subscription endpoints
+app.post('/api/subscription/create', authenticateApiKey, async (req, res) => {
+    try {
+        const { userId, plan } = req.body;
+        
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Create or get Stripe customer
+        let customerId = user.stripeCustomerId;
+        if (!customerId) {
+            const customerResult = await paymentService.createCustomer(
+                user.email, 
+                user.firstName, 
+                user.lastName
+            );
+            if (!customerResult.success) {
+                return res.status(500).json({ error: 'Failed to create customer' });
+            }
+            customerId = customerResult.customerId;
+            user.stripeCustomerId = customerId;
+            await user.save();
+        }
+        
+        // Create checkout session
+        const priceId = plan === 'yearly' ? 
+            process.env.STRIPE_YEARLY_PRICE_ID : 
+            process.env.STRIPE_MONTHLY_PRICE_ID;
+            
+        const sessionResult = await paymentService.createCheckoutSession(
+            customerId,
+            priceId,
+            `${req.protocol}://${req.get('host')}/subscription/success?userId=${userId}`,
+            `${req.protocol}://${req.get('host')}/subscription/cancel`,
+            { userId, plan }
+        );
+        
+        if (!sessionResult.success) {
+            return res.status(500).json({ error: 'Failed to create checkout session' });
+        }
+        
+        res.json({
+            success: true,
+            checkoutUrl: sessionResult.url,
+            sessionId: sessionResult.sessionId
+        });
+    } catch (error) {
+        console.error('Subscription creation error:', error);
+        res.status(500).json({ error: 'Subscription creation failed', details: error.message });
+    }
+});
+
+// Stripe webhook
+app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    let event;
+    
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+        console.error('Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    try {
+        await paymentService.handleWebhook(event);
+        res.json({ received: true });
+    } catch (error) {
+        console.error('Webhook handling error:', error);
+        res.status(500).json({ error: 'Webhook handling failed' });
+    }
+});
+
+// Link management API (updated for database)
+app.post('/api/links', authenticateApiKey, async (req, res) => {
+    try {
+        const { originalUrl, customAlias, userId } = req.body;
+        
+        if (!originalUrl || !userId) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Check if custom alias is available
+        if (customAlias) {
+            const existingLink = await Link.findOne({ shortUrl: customAlias });
+            if (existingLink) {
+                return res.status(400).json({ error: 'Custom alias already taken' });
+            }
+        }
+        
+        // Generate short URL
+        const shortUrl = customAlias || generateShortUrl();
+        
+        // Create link
+        const link = new Link({
+            userId,
+            originalUrl,
             shortUrl,
-            displayUrl,
-            shortCode: link.shortCode,
-            clicks: link.clicks,
-            createdAt: link.createdAt.toLocaleDateString()
+            customAlias: customAlias || undefined
         });
         
+        await link.save();
+        
+        console.log('Link created successfully:', link);
+        res.status(201).json({
+            success: true,
+            link: {
+                id: link._id,
+                originalUrl: link.originalUrl,
+                shortUrl: link.shortUrl,
+                customAlias: link.customAlias,
+                createdAt: link.createdAt
+            }
+        });
     } catch (error) {
         console.error('Error creating link:', error);
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 
-// Get all links
 app.get('/api/links', authenticateApiKey, async (req, res) => {
     try {
-        const activeLinks = links.filter(l => l.isActive);
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const { userId } = req.query;
         
-        const formattedLinks = activeLinks.map(link => ({
-            id: link.id,
-            originalUrl: link.originalUrl,
-            shortUrl: `${baseUrl}/r/${link.shortCode}`,
-            displayUrl: link.displayUrl,
-            shortCode: link.shortCode,
-            clicks: link.clicks,
-            createdAt: link.createdAt.toLocaleDateString()
-        }));
-        
-        res.json(formattedLinks);
-    } catch (error) {
-        console.error('Error fetching links:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Redirect short link
-app.get('/r/:shortCode', async (req, res) => {
-    try {
-        const { shortCode } = req.params;
-        
-        const link = links.find(l => 
-            l.shortCode === shortCode.toUpperCase() && l.isActive
-        );
-        
-        if (!link) {
-            return res.status(404).send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Link Not Found - LinQrius</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-                        .container { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); max-width: 500px; margin: 0 auto; }
-                        a { color: #FFD700; text-decoration: none; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>🔗 Link Not Found</h1>
-                        <p>The short link <strong>${shortCode}</strong> doesn't exist or has expired.</p>
-                        <p><a href="/">← Go to LinQrius</a></p>
-                    </div>
-                </body>
-                </html>
-            `);
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required' });
         }
         
-        // Update click count
-        link.clicks += 1;
-        
-        console.log(`📊 Redirecting ${shortCode} to ${link.originalUrl} (${link.clicks} clicks)`);
-        
-        // Redirect to original URL
-        res.redirect(link.originalUrl);
-        
-    } catch (error) {
-        console.error('Error redirecting:', error);
-        res.status(500).send('Internal server error');
-    }
-});
-
-// API Key Management Endpoint (Protected with admin key)
-app.get('/api/keys', authenticateApiKey, (req, res) => {
-    try {
-        // Only allow admin key to view API keys
-        if (req.apiKeyInfo.keyName !== 'linqrius-admin') {
-            return res.status(403).json({ 
-                error: 'Access denied',
-                message: 'Only admin API key can access this endpoint'
-            });
-        }
-        
-        const keyInfo = Object.keys(API_KEYS).map(name => ({
-            name,
-            key: API_KEYS[name].substring(0, 10) + '...',
-            permissions: name === 'linqrius-admin' ? 'full' : 'standard'
-        }));
+        const links = await Link.find({ userId }).sort({ createdAt: -1 });
         
         res.json({
-            message: 'API Keys retrieved successfully',
-            keys: keyInfo,
-            totalKeys: keyInfo.length
+            success: true,
+            links: links.map(link => ({
+                id: link._id,
+                originalUrl: link.originalUrl,
+                shortUrl: link.shortUrl,
+                customAlias: link.customAlias,
+                clicks: link.clicks,
+                createdAt: link.createdAt
+            }))
         });
-        
     } catch (error) {
-        console.error('Error retrieving API keys:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error fetching links:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 
-// Delete link
 app.delete('/api/links/:id', authenticateApiKey, async (req, res) => {
     try {
         const { id } = req.params;
+        const { userId } = req.query;
         
-        const link = links.find(l => l.id === parseInt(id));
-        if (link) {
-            link.isActive = false;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required' });
         }
         
-        res.json({ message: 'Link deleted successfully' });
+        const link = await Link.findOneAndDelete({ _id: id, userId });
+        
+        if (!link) {
+            return res.status(404).json({ error: 'Link not found or access denied' });
+        }
+        
+        res.json({ success: true, message: 'Link deleted successfully' });
     } catch (error) {
         console.error('Error deleting link:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 
-// Generate random short code
-function generateShortCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+// Redirect short URLs
+app.get('/:shortUrl', async (req, res) => {
+    try {
+        const { shortUrl } = req.params;
+        
+        const link = await Link.findOne({ shortUrl });
+        if (!link) {
+            return res.status(404).send('Link not found');
+        }
+        
+        // Increment click count
+        link.clicks += 1;
+        link.lastClicked = new Date();
+        await link.save();
+        
+        // Redirect to original URL
+        res.redirect(link.originalUrl);
+    } catch (error) {
+        console.error('Redirect error:', error);
+        res.status(500).send('Redirect error');
+    }
+});
+
+// Helper function to generate short URLs
+function generateShortUrl() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
 }
 
-// Health check (No API key required for health checks)
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        totalLinks: links.filter(l => l.isActive).length,
-        storage: 'in-memory',
-        apiKeyAuth: 'enabled',
-        totalApiKeys: Object.keys(API_KEYS).length
-    });
-});
-
-// Serve index.html for root
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
+// Start server
 app.listen(PORT, () => {
-    console.log(`🚀 LinQrius server running on http://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔗 Link Shortener: http://localhost:${PORT}/link-shorten-db.html`);
-    console.log(`💾 Storage: In-Memory (will reset on restart)`);
+    console.log('🚀 LinQrius server starting with in-memory storage...');
+    console.log('🔑 API Key authentication enabled');
+    console.log('📋 Available API Keys:', Object.keys(API_KEYS).join(', '));
+    console.log('🚀 LinQrius server running on http://localhost:' + PORT);
+    console.log('📊 Health check: http://localhost:' + PORT + '/health');
+    console.log('🔗 Link Shortener: http://localhost:' + PORT + '/link-shorten-db.html');
+    console.log('💾 Storage: In-Memory (will reset on restart)');
+    console.log('🔑 API request authenticated with key: linqrius-main');
 });
-
-module.exports = app;
