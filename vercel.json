@@ -7,22 +7,18 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server-simple.js"
+      "source": "/api/(.*)",
+      "destination": "/server-simple.js"
     },
     {
-      "src": "/r/(.*)",
-      "dest": "/server-simple.js"
+      "source": "/r/(.*)",
+      "destination": "/server-simple.js"
     },
     {
-      "src": "/health",
-      "dest": "/server-simple.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
+      "source": "/health",
+      "destination": "/server-simple.js"
     }
   ],
   "functions": {
