@@ -1070,3 +1070,5 @@ function testFetch() {
     showNotification('Test data with image inserted!', 'success');
     console.log('Test data inserted successfully');
 }
+
+// Deployment ready - LinQrius LinQart v1.0
