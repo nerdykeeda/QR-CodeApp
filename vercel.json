@@ -1,15 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "echo 'Static build complete'",
-  "outputDirectory": ".",
+  "outputDirectory": "public",
   "builds": [
     {
       "src": "server-simple.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "**/*.{html,css,js,png,jpg,jpeg,svg,ico,json}",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -26,16 +21,8 @@
       "dest": "/server-simple.js"
     },
     {
-      "src": "/(.*\\.(html|css|js|png|jpg|jpeg|svg|ico|json))",
-      "dest": "/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/public/$1"
     }
   ],
   "functions": {
