@@ -718,6 +718,296 @@ body {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
+/* Small preview block under Digital Card Style */
+.card-style-preview {
+    margin-top: 8px;
+}
+
+/* Digital Business Card Styles */
+.digital-card-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.digital-card {
+    width: 400px;
+    height: 800px;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    border: 1px solid #e5e7eb;
+}
+
+.card-image-section {
+    height: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.card-placeholder i {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+.card-placeholder p {
+    font-size: 1rem;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.card-profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    /* Prevent stretching by maintaining aspect ratio */
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.card-qr-overlay {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.qr-placeholder {
+    width: 110px;
+    height: 110px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.qr-placeholder i {
+    color: #999;
+    font-size: 40px;
+}
+
+.card-info-section {
+    height: 50%;
+    padding: 18px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.card-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e91e63;
+    margin-bottom: 4px;
+    line-height: 1.0;
+}
+
+.card-title-dept {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 8px;
+    font-weight: 500;
+    line-height: 1.0;
+}
+
+.card-title-underline {
+    width: 100%;
+    height: 2px;
+    background: #e91e63;
+    margin-bottom: 15px;
+}
+
+.card-company {
+    font-size: 1.1rem;
+    color: #444;
+    margin-bottom: 12px;
+    font-weight: 500;
+    line-height: 1.0;
+}
+
+.card-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.card-contact-info::-webkit-scrollbar {
+    width: 4px;
+}
+
+.card-contact-info::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.card-contact-info::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.card-contact-info::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: #2c2c2c;
+    margin-bottom: 3px;
+    line-height: 1.1;
+}
+
+.contact-item i {
+    width: 16px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+/* Social Media Icons */
+.card-social-media {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.social-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.social-icon:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    color: white;
+}
+
+.social-icon i {
+    font-size: 18px;
+}
+
+/* Individual social media brand colors */
+.social-icon#cardLinkedIn {
+    background: linear-gradient(135deg, #0077b5 0%, #005885 100%);
+}
+
+.social-icon#cardX {
+    background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+}
+
+.social-icon#cardFacebook {
+    background: linear-gradient(135deg, #4267b2 0%, #365899 100%);
+}
+
+.social-icon#cardInstagram {
+    background: linear-gradient(135deg, #e4405f 0%, #c13584 100%);
+}
+
+.social-icon#cardYouTube {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+}
+
+/* Responsive adjustments for social media icons */
+@media (max-width: 768px) {
+    .card-social-media {
+        gap: 12px;
+        margin-top: 15px;
+        padding-top: 12px;
+    }
+    
+    .social-icon {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .social-icon i {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-social-media {
+        gap: 10px;
+        margin-top: 12px;
+        padding-top: 10px;
+    }
+    
+    .social-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .social-icon i {
+        font-size: 14px;
+    }
+}
+
+/* Responsive adjustments for digital card */
+@media (max-width: 768px) {
+    .digital-card {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        min-height: 700px;
+    }
+}
+
+@media (max-width: 480px) {
+    .digital-card {
+        width: 100%;
+        height: auto;
+        min-height: 650px;
+    }
+    
+    .card-info-section {
+        padding: 20px;
+    }
+    
+    .card-name {
+        font-size: 1.5rem;
+    }
+}
+
 .notice-header {
     display: flex;
     align-items: center;

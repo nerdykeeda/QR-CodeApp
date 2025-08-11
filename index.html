@@ -23,8 +23,13 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     
-    <!-- QRCode library - Working CDN version -->
+    <!-- QRCode libraries -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <!-- Fancy styling (rounded dots, gradients, logo) -->
+    <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.min.js"></script>
+    <!-- HTML to Canvas for digital card download -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 </head>
 <body>
     <div class="container">
@@ -82,6 +87,16 @@
                                 <i class="fas fa-camera"></i>
                                 <p>Upload or capture profile picture</p>
                                 <span>JPG, PNG, GIF up to 5MB</span>
+                                <small style="color: #28a745; font-weight: 500; margin-top: 5px; display: block;">🎯 Auto-crop enabled: Any size image will be perfectly fitted!</small>
+                                <div style="background: #e8f5e8; border: 1px solid #28a745; border-radius: 8px; padding: 10px; margin-top: 10px; text-align: left;">
+                                    <strong style="color: #28a745;">✨ Smart Auto-Crop Feature:</strong>
+                                    <ul style="margin: 5px 0 0 20px; color: #2d5a2d; font-size: 0.9rem;">
+                                        <li>Upload any size image (square, landscape, portrait)</li>
+                                        <li>Automatically cropped to 400x350px for perfect fit</li>
+                                        <li>No stretching or distortion</li>
+                                        <li>Centers the most important part of the image</li>
+                                    </ul>
+                                </div>
                             </div>
                             <img id="profilePreview" class="profile-preview" style="display: none;" />
                             <input type="file" id="profilePicture" accept="image/*" style="display: none;">
@@ -183,29 +198,9 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="department">Department</label>
-                            <input type="text" id="department" placeholder="e.g., Engineering, Sales, Marketing">
-                        </div>
-                        <div class="form-group">
-                            <label for="industry">Industry</label>
-                            <select id="industry">
-                                <option value="">Select Industry</option>
-                                <option value="technology">Technology</option>
-                                <option value="healthcare">Healthcare</option>
-                                <option value="finance">Finance</option>
-                                <option value="education">Education</option>
-                                <option value="retail">Retail</option>
-                                <option value="manufacturing">Manufacturing</option>
-                                <option value="consulting">Consulting</option>
-                                <option value="real-estate">Real Estate</option>
-                                <option value="legal">Legal</option>
-                                <option value="media">Media & Entertainment</option>
-                                <option value="non-profit">Non-Profit</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" placeholder="e.g., Engineering, Sales, Marketing">
                     </div>
 
                     <!-- Contact Information -->
@@ -220,15 +215,9 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="workPhone">Work Phone</label>
-                            <input type="tel" id="workPhone" placeholder="+1 234 567 8900">
-                        </div>
-                        <div class="form-group">
-                            <label for="fax">Fax</label>
-                            <input type="tel" id="fax" placeholder="+1 234 567 8900">
-                        </div>
+                    <div class="form-group">
+                        <label for="workPhone">Work Phone</label>
+                        <input type="tel" id="workPhone" placeholder="+1 234 567 8900">
                     </div>
 
                     <div class="form-group">
@@ -241,32 +230,7 @@
                         <textarea id="address" rows="3" placeholder="Enter your full business address"></textarea>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="city">City</label>
-                            <input type="text" id="city" placeholder="e.g., New York">
-                        </div>
-                        <div class="form-group">
-                            <label for="state">State/Province</label>
-                            <input type="text" id="state" placeholder="e.g., NY">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="zipCode">ZIP/Postal Code</label>
-                            <input type="text" id="zipCode" placeholder="e.g., 10001">
-                        </div>
-                        <div class="form-group">
-                            <label for="country">Country</label>
-                            <input type="text" id="country" placeholder="e.g., USA">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="businessHours">Business Hours</label>
-                        <textarea id="businessHours" rows="2" placeholder="e.g., Mon-Fri: 9AM-6PM, Sat: 10AM-4PM"></textarea>
-                    </div>
+                    
 
                     <!-- Social Media Links -->
                     <h3><i class="fas fa-share-alt"></i> Social Media Links</h3>
@@ -297,46 +261,9 @@
                         <input type="url" id="youtube" placeholder="https://youtube.com/@channel">
                     </div>
 
-                    <!-- Professional Details -->
-                    <h3><i class="fas fa-briefcase"></i> Professional Details</h3>
-                    <div class="form-group">
-                        <label for="specializations">Specializations/Services</label>
-                        <textarea id="specializations" rows="2" placeholder="e.g., Web Development, Digital Marketing, SEO, Mobile Apps"></textarea>
-                    </div>
+                    
 
-                    <div class="form-group">
-                        <label for="skills">Skills & Expertise</label>
-                        <textarea id="skills" rows="2" placeholder="e.g., JavaScript, React, Node.js, Python, Project Management"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="certifications">Certifications</label>
-                        <textarea id="certifications" rows="2" placeholder="e.g., PMP, AWS Certified, Google Analytics"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="languages">Languages Spoken</label>
-                        <input type="text" id="languages" placeholder="e.g., English, Spanish, French">
-                    </div>
-
-                    <!-- Educational Background (Optional) -->
-                    <h3><i class="fas fa-graduation-cap"></i> Educational Background (Optional)</h3>
-                    <div class="form-group">
-                        <label for="education">Education</label>
-                        <textarea id="education" rows="2" placeholder="e.g., Bachelor's in Computer Science, University of Technology"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="experience">Years of Experience</label>
-                        <select id="experience">
-                            <option value="">Select Experience</option>
-                            <option value="0-1">0-1 years</option>
-                            <option value="1-3">1-3 years</option>
-                            <option value="3-5">3-5 years</option>
-                            <option value="5-10">5-10 years</option>
-                            <option value="10+">10+ years</option>
-                        </select>
-                    </div>
+                    
 
                     <!-- Premium Features Notice -->
                     <div class="premium-notice">
@@ -347,6 +274,81 @@
                         <div class="notice-content">
                             <p><strong>Free:</strong> Basic QR Code Generation</p>
                             <p><strong>Premium ($2/month or $9/year):</strong> Digital Business Card + Analytics + Logo in QR</p>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Digital Card Live Preview -->
+                    <div class="form-group">
+                        <label>Digital Business Card Preview</label>
+                        <div id="cardStylePreview" class="card-style-preview">
+                            <div class="digital-card-container">
+                                <div class="digital-card">
+                                    <div class="card-image-section">
+                                        <div class="card-placeholder" id="cardPlaceholder">
+                                            <i class="fas fa-user-circle"></i>
+                                            <p>Upload a profile picture to see your digital card</p>
+                                        </div>
+                                        <img id="cardProfileImage" class="card-profile-image" style="display: none;" alt="Profile">
+                                        <div class="card-qr-overlay" id="cardQROverlay">
+                                            <div class="qr-placeholder">
+                                                <i class="fas fa-qrcode"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-info-section">
+                                        <div>
+                                            <div class="card-name" id="cardName">Your Name</div>
+                                            <div class="card-title-dept" id="cardTitleDept">Job Title - Department</div>
+                                            <div class="card-title-underline"></div>
+                                            <div class="card-company" id="cardCompany">Company Name</div>
+                                        </div>
+                                        <div class="card-contact-info">
+                                            <div class="contact-item" id="cardCompanyContact" style="display: none;">
+                                                <i class="fas fa-building"></i>
+                                                <span id="cardCompanyText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardAddress" style="display: none;">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span id="cardAddressText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardMobile" style="display: none;">
+                                                <i class="fas fa-phone"></i>
+                                                <span id="cardMobileText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardEmail" style="display: none;">
+                                                <i class="fas fa-envelope"></i>
+                                                <span id="cardEmailText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardWebsite" style="display: none;">
+                                                <i class="fas fa-globe"></i>
+                                                <span id="cardWebsiteText"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Social Media Icons -->
+                                        <div class="card-social-media" id="cardSocialMedia">
+                                            <a href="#" class="social-icon" id="cardLinkedIn" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-linkedin"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardX" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-twitter"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardFacebook" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-facebook"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardInstagram" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-instagram"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardYouTube" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-youtube"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <small>Live preview of your digital business card</small>
                         </div>
                     </div>
 
@@ -374,6 +376,10 @@
                         <button id="downloadVCard" class="download-btn secondary">
                             <i class="fas fa-address-card"></i> Download vCard
                         </button>
+                        <button id="downloadCard" class="download-btn secondary">
+                            <i class="fas fa-image"></i> Download Digital Card
+                        </button>
+
                     </div>
                 </div>
             </div>

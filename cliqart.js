@@ -50,6 +50,75 @@ class LinQart {
         }
     }
 
+    updateSaveButtonState() {
+        const saveBtn = document.getElementById('saveStoreBtn');
+        if (!saveBtn) return;
+        const enabled = this.currentStore.name && this.currentStore.name.trim() && this.currentStore.products.length > 0;
+        saveBtn.disabled = !enabled;
+        if (enabled) {
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Your Store';
+        } else {
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Add store info & products first';
+        }
+    }
+
+    async saveStoreToServer() {
+        try {
+            const currentUser = this.getCurrentUser();
+            if (!currentUser) {
+                showNotification('Please sign in to save your store', 'error');
+                return;
+            }
+
+            const payload = {
+                id: this.currentStore.dbId || null,
+                name: this.currentStore.name,
+                description: this.currentStore.description,
+                category: this.currentStore.category,
+                banner: this.currentStore.banner,
+                logo: this.currentStore.logo,
+                products: this.currentStore.products,
+                userId: currentUser.id,
+                storeUrl: this.currentStore.customUrl || ''
+            };
+
+            const response = await fetch('/api/stores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to save store');
+            }
+
+            const data = await response.json();
+            const saved = data.store;
+            this.currentStore.dbId = saved.id;
+            this.currentStore.url = saved.url;
+            this.currentStore.published = true;
+
+            // Generate QR and show URL
+            this.generateStoreQR();
+            const generatedSection = document.getElementById('generatedStore');
+            const storeUrlInput = document.getElementById('storeUrl');
+            if (generatedSection && storeUrlInput) {
+                storeUrlInput.value = this.currentStore.url;
+                generatedSection.style.display = 'block';
+                generatedSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // Persist locally for dashboard
+            this.saveStores();
+
+            showNotification('Store saved! Your store URL is ready.', 'success');
+        } catch (error) {
+            console.error('Save store error:', error);
+            showNotification(error.message, 'error');
+        }
+    }
+
     setupFileUploads() {
         // Banner upload
         const bannerUpload = document.getElementById('bannerUpload');
@@ -111,6 +180,7 @@ class LinQart {
             // Update current store
             this.currentStore[type] = dataUrl;
             this.updateStorePreview();
+            this.updateSaveButtonState && this.updateSaveButtonState();
             
             showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully!`, 'success');
         };
@@ -123,6 +193,7 @@ class LinQart {
         fileInput.value = '';
         this.currentStore[type] = '';
         this.updateStorePreview();
+        this.updateSaveButtonState && this.updateSaveButtonState();
         showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} removed`, 'info');
     }
 
@@ -137,6 +208,8 @@ class LinQart {
 
         this.updateStorePreview();
         this.checkGenerateButtonState();
+        this.updateSaveButtonState && this.updateSaveButtonState();
+        this.updateSaveButtonState && this.updateSaveButtonState();
     }
 
     async autoFetchProductData() {
@@ -501,6 +574,7 @@ class LinQart {
         this.updateProductsDisplay();
         this.updateStorePreview();
         this.checkGenerateButtonState();
+        this.updateSaveButtonState && this.updateSaveButtonState();
         
         // Clear form and close modal
         document.getElementById('productForm')?.reset();
@@ -719,9 +793,10 @@ class LinQart {
     deleteProduct(id) {
         if (confirm('Are you sure you want to delete this product?')) {
             this.currentStore.products = this.currentStore.products.filter(product => product.id !== id);
-            this.updateProductsDisplay();
-            this.updateStorePreview();
-            this.checkGenerateButtonState();
+        this.updateProductsDisplay();
+        this.updateStorePreview();
+        this.checkGenerateButtonState();
+        this.updateSaveButtonState && this.updateSaveButtonState();
             showNotification('Product deleted successfully!', 'success');
         }
     }
@@ -937,6 +1012,12 @@ function previewStore() {
     }
 }
 
+function saveStore() {
+    if (window.cliqart && window.cliqart.saveStoreToServer) {
+        window.cliqart.saveStoreToServer();
+    }
+}
+
 function generateStoreLink() {
     if (window.cliqart) {
         window.cliqart.generateStoreLink();
@@ -1038,37 +1119,6 @@ function removeImagePreview() {
         }
         showNotification('Image preview removed', 'info');
     }
-}
-
-// Test function for debugging
-function testFetch() {
-    console.log('Test fetch triggered');
-    
-    // Test form field access
-    const productNameField = document.getElementById('productName');
-    const productPriceField = document.getElementById('productPrice');
-    const productUrlField = document.getElementById('productUrl');
-    const productImageField = document.getElementById('productImage');
-    
-    if (!productNameField || !productPriceField || !productUrlField) {
-        console.error('Form fields not found');
-        showNotification('Form fields not found. Are you in the add product modal?', 'error');
-        return;
-    }
-    
-    // Fill test data directly including image
-    productUrlField.value = 'https://example.com/test-product';
-    productNameField.value = 'Test Product';
-    productPriceField.value = '$99.99';
-    productImageField.value = 'https://via.placeholder.com/1080x1450/667eea/ffffff?text=Sample+Product';
-    
-    // Show image preview
-    if (window.cliQartApp) {
-        window.cliQartApp.showImagePreview(productImageField.value);
-    }
-    
-    showNotification('Test data with image inserted!', 'success');
-    console.log('Test data inserted successfully');
 }
 
 // Deployment ready - LinQrius LinQart v1.0

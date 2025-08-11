@@ -1,5 +1,5 @@
 const express = require('express');
-const { Store } = require('./database');
+const { findStoreByIdOrUrl, incrementStoreViews } = require('./database');
 const { checkPremiumFeatures } = require('./premium-middleware');
 
 const router = express.Router();
@@ -9,13 +9,7 @@ router.get('/store/:storeId', async (req, res) => {
     try {
         const { storeId } = req.params;
         
-        // Find store by ID or custom URL
-        const store = await Store.findOne({
-            $or: [
-                { _id: storeId },
-                { storeUrl: { $regex: storeId, $options: 'i' } }
-            ]
-        }).populate('userId', 'firstName lastName email');
+        const store = await findStoreByIdOrUrl(storeId);
 
         if (!store) {
             return res.status(404).send(`
@@ -38,9 +32,7 @@ router.get('/store/:storeId', async (req, res) => {
             `);
         }
 
-        // Increment view count (for analytics)
-        store.views = (store.views || 0) + 1;
-        await store.save();
+        await incrementStoreViews(store.id);
 
         // Generate store HTML
         const storeHTML = generateStoreHTML(store);
@@ -57,12 +49,7 @@ router.get('/api/store/:storeId', async (req, res) => {
     try {
         const { storeId } = req.params;
         
-        const store = await Store.findOne({
-            $or: [
-                { _id: storeId },
-                { storeUrl: { $regex: storeId, $options: 'i' } }
-            ]
-        }).populate('userId', 'firstName lastName email');
+        const store = await findStoreByIdOrUrl(storeId);
 
         if (!store) {
             return res.status(404).json({ error: 'Store not found' });
@@ -70,7 +57,7 @@ router.get('/api/store/:storeId', async (req, res) => {
 
         // Remove sensitive information
         const storeData = {
-            id: store._id,
+            id: store.id,
             storeName: store.storeName,
             storeDescription: store.storeDescription,
             storeCategory: store.storeCategory,
@@ -81,11 +68,7 @@ router.get('/api/store/:storeId', async (req, res) => {
             qrCode: store.qrCode,
             published: store.published,
             createdAt: store.createdAt,
-            views: store.views || 0,
-            owner: {
-                firstName: store.userId.firstName,
-                lastName: store.userId.lastName
-            }
+            views: store.views || 0
         };
 
         res.json(storeData);
@@ -100,7 +83,7 @@ function generateStoreHTML(store) {
     const productsHTML = store.products.map(product => `
         <div class="product-card">
             <div class="product-image">
-                <img src="${product.image || '/icons/default-product.png'}" alt="${product.name}" onerror="this.src='/icons/default-product.png'">
+                <img src="${product.image || '/icons/icon-192x192.png'}" alt="${product.name}" onerror="this.src='/icons/icon-192x192.png'">
             </div>
             <div class="product-info">
                 <h3 class="product-name">${product.name}</h3>

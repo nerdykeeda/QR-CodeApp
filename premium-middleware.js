@@ -1,4 +1,4 @@
-const { User, Subscription } = require('./database');
+const { getUserById, findActiveSubscriptionForUser, updateUser } = require('./database');
 
 // Middleware to check if user has premium access
 const requirePremium = async (req, res, next) => {
@@ -11,7 +11,7 @@ const requirePremium = async (req, res, next) => {
             });
         }
 
-        const user = await User.findById(userId);
+        const user = await getUserById(userId);
         if (!user) {
             return res.status(404).json({ 
                 error: 'User not found',
@@ -49,31 +49,25 @@ const requirePremium = async (req, res, next) => {
 const checkPremiumStatus = async (user) => {
     try {
         // Check if user plan is premium and not expired
-        if (user.plan === 'premium' && user.planExpiry && user.planExpiry > new Date()) {
+        if (user.plan === 'premium' && user.planExpiry && new Date(user.planExpiry) > new Date()) {
             return true;
         }
 
         // Check for active Stripe subscription
         if (user.stripeCustomerId) {
-            const subscription = await Subscription.findOne({
-                userId: user._id,
-                status: 'active'
-            });
-
-            if (subscription && subscription.currentPeriodEnd > new Date()) {
-                // Update user plan expiry
-                user.plan = 'premium';
-                user.planExpiry = subscription.currentPeriodEnd;
-                await user.save();
+            const subscription = await findActiveSubscriptionForUser(user.id || user._id);
+            if (subscription && new Date(subscription.currentPeriodEnd) > new Date()) {
+                await updateUser(user.id || user._id, {
+                    plan: 'premium',
+                    planExpiry: subscription.currentPeriodEnd,
+                });
                 return true;
             }
         }
 
         // Downgrade to free if premium expired
         if (user.plan === 'premium') {
-            user.plan = 'free';
-            user.planExpiry = null;
-            await user.save();
+            await updateUser(user.id || user._id, { plan: 'free', planExpiry: null });
         }
 
         return false;
@@ -92,7 +86,7 @@ const checkPremiumFeatures = async (req, res, next) => {
             return next();
         }
 
-        const user = await User.findById(userId);
+        const user = await getUserById(userId);
         if (!user) {
             req.premiumFeatures = { available: false, plan: 'free' };
             return next();
