@@ -1,24 +1,33 @@
 const admin = require('firebase-admin');
+const firebaseConfig = require('./firebase-config');
 
-// Initialize Firebase Admin using environment variables
-// Required envs: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
-// For private key, use escaped newlines in .env and we will replace them here
+// Initialize Firebase Admin using local configuration file
 function initializeFirebase() {
   if (admin.apps.length) {
     return admin.app();
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const projectId = firebaseConfig.projectId;
+  const clientEmail = firebaseConfig.clientEmail;
+  let privateKey = firebaseConfig.privateKey;
 
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error('Missing Firebase Admin credentials. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+    throw new Error('Missing Firebase Admin credentials. Please configure firebase-config.js with your Firebase project details');
   }
 
-  // Handle escaped newlines in env
-  if (privateKey.includes('\\n')) {
-    privateKey = privateKey.replace(/\\n/g, '\n');
+  // Check if projectId still has placeholder value
+  if (projectId === 'your-project-id') {
+    throw new Error('Please update firebase-config.js with your actual Firebase project ID');
+  }
+
+  // Check if clientEmail still has placeholder value
+  if (clientEmail === 'firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com') {
+    throw new Error('Please update firebase-config.js with your actual Firebase service account email');
+  }
+
+  // Check if privateKey still has placeholder value
+  if (privateKey.includes('ABCDEFGHIJKLMNOPQRSTUVWXYZ')) {
+    throw new Error('Please update firebase-config.js with your actual Firebase private key');
   }
 
   admin.initializeApp({

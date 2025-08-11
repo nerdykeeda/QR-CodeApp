@@ -527,27 +527,27 @@ class VCardGenerator {
         // Auto-crop the captured photo
         this.autoCropImage(this.capturedPhotoData, (croppedImage) => {
             this.profileImageData = croppedImage;
-            this.updateProfilePreview();
+        this.updateProfilePreview();
             
-            // Reveal camera/crop options after applying
-            if (typeof this.showCameraOptions === 'function') {
-                this.showCameraOptions();
-            }
+        // Reveal camera/crop options after applying
+        if (typeof this.showCameraOptions === 'function') {
+            this.showCameraOptions();
+        }
             
-            // Close camera modal and stop stream
-            const cameraModal = document.getElementById('cameraModal');
-            if (cameraModal) cameraModal.style.display = 'none';
-            if (this.cameraStream) {
-                this.cameraStream.getTracks().forEach(track => track.stop());
-                this.cameraStream = null;
-            }
-            document.body.classList.remove('modal-open');
+        // Close camera modal and stop stream
+        const cameraModal = document.getElementById('cameraModal');
+        if (cameraModal) cameraModal.style.display = 'none';
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        document.body.classList.remove('modal-open');
             
-            // Reset buttons for next open
-            document.getElementById('captureBtn').style.display = 'block';
-            document.getElementById('retakeBtn').style.display = 'none';
-            const usePhotoBtn = document.getElementById('usePhotoBtn');
-            if (usePhotoBtn) usePhotoBtn.style.display = 'none';
+        // Reset buttons for next open
+        document.getElementById('captureBtn').style.display = 'block';
+        document.getElementById('retakeBtn').style.display = 'none';
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
+        if (usePhotoBtn) usePhotoBtn.style.display = 'none';
         });
     }
 
@@ -709,10 +709,10 @@ class VCardGenerator {
             // Auto-crop the manually cropped image to fit digital card perfectly
             this.autoCropImage(croppedImageData, (finalCroppedImage) => {
                 this.profileImageData = finalCroppedImage;
-                
-                // Update preview
-                this.updateProfilePreview();
-                this.closeCropModal();
+            
+            // Update preview
+            this.updateProfilePreview();
+            this.closeCropModal();
                 showNotification('Image auto-cropped and fitted perfectly!', 'success');
             });
         };
@@ -748,8 +748,8 @@ class VCardGenerator {
             // Auto-crop the image to fit the digital card perfectly
             this.autoCropImage(e.target.result, (croppedImage) => {
                 this.profileImageData = croppedImage;
-                this.updateProfilePreview();
-                this.showCameraOptions();
+            this.updateProfilePreview();
+            this.showCameraOptions();
                 showNotification('Image auto-cropped and fitted perfectly!', 'success');
             });
         };
@@ -1684,12 +1684,12 @@ class VCardGenerator {
     async generateDigitalCard() {
         try {
             // Check if QR code exists
-            const qrContainer = document.getElementById('qrcode');
-            const qrEl = qrContainer?.querySelector('img, canvas');
-            if (!qrEl) {
-                showNotification('Please generate the QR first', 'error');
-                return null;
-            }
+        const qrContainer = document.getElementById('qrcode');
+        const qrEl = qrContainer?.querySelector('img, canvas');
+        if (!qrEl) {
+            showNotification('Please generate the QR first', 'error');
+            return null;
+        }
 
             // Get the digital card preview element
             const digitalCardElement = document.querySelector('.digital-card');
