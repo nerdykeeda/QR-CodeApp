@@ -30,13 +30,28 @@ function initializeFirebase() {
     throw new Error('Please update firebase-config.js with your actual Firebase private key');
   }
 
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    }),
-  });
+  // Ensure private key has proper format
+  if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') || !privateKey.includes('-----END PRIVATE KEY-----')) {
+    throw new Error('Invalid private key format. Make sure it includes BEGIN and END markers');
+  }
+
+  // Clean up the private key - remove any extra whitespace
+  privateKey = privateKey.trim();
+
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    });
+  } catch (error) {
+    if (error.message.includes('ASN.1') || error.message.includes('Too few bytes')) {
+      throw new Error('Private key parsing error. Make sure the private key is properly formatted with actual newlines, not \\n characters.');
+    }
+    throw error;
+  }
 
   return admin.app();
 }
