@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius - VCard QR Generator</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.linqrius.com/">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Create your digital visiting card with QR code. Professional vCard QR generator with profile picture, social media links, and multiple download formats.">
+    <meta name="keywords" content="QR code, vCard, digital business card, contact QR, professional QR, business card QR">
+    <meta name="author" content="LinQrius">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="LinQrius - VCard QR Generator">
+    <meta property="og:description" content="Create your digital visiting card with QR code. Professional vCard QR generator with profile picture, social media links, and multiple download formats.">
+    <meta property="og:url" content="https://www.linqrius.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LinQrius">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LinQrius - VCard QR Generator">
+    <meta name="twitter:description" content="Create your digital visiting card with QR code. Professional vCard QR generator with profile picture, social media links, and multiple download formats.">
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="LinQrius">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" as="script">
+    
+    <!-- Font Awesome with async loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- QRCode libraries with async loading -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+    <!-- Fancy styling (rounded dots, gradients, logo) -->
+    <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.min.js" defer></script>
+    <!-- HTML to Canvas for digital card download -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-qrcode"></i> LinQrius</h1>
+                    <p>Create your digital visiting card with QR code</p>
+                </div>
+                <div class="header-right">
+                    <nav class="nav-menu">
+                        <ul>
+                                                    <li><a href="/" class="active"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="/" class="active"><i class="fas fa-qrcode"></i> VCard QR</a></li>
+                        <li><a href="/link-shorten"><i class="fas fa-link"></i> Link Shorten</a></li>
+                        <li><a href="/cliqart"><i class="fas fa-store"></i> LinQart</a></li>
+                        </ul>
+                    </nav>
+                    <div class="auth-buttons" id="authButtons">
+                        <button class="auth-btn login-btn" onclick="openAuthModal('login')">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                        <button class="auth-btn signup-btn" onclick="openAuthModal('signup')">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </button>
+                    </div>
+                </div>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-info">
+                        <span class="user-name" id="userName">User</span>
+                        <div class="user-dropdown">
+                            <button class="dropdown-btn" onclick="toggleUserDropdown()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                                <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2>Personal Information</h2>
+                <form id="vcardForm" class="vcard-form">
+                    <!-- Profile Picture Upload -->
+                    <div class="form-group profile-upload">
+                        <label for="profilePicture">Profile Picture</label>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-camera"></i>
+                                <p>Upload or capture profile picture</p>
+                                <span>JPG, PNG, GIF up to 5MB</span>
+                                <small style="color: #28a745; font-weight: 500; margin-top: 5px; display: block;">🎯 Auto-crop enabled: Any size image will be perfectly fitted!</small>
+                                <div style="background: #e8f5e8; border: 1px solid #28a745; border-radius: 8px; padding: 10px; margin-top: 10px; text-align: left;">
+                                    <strong style="color: #28a745;">✨ Smart Auto-Crop Feature:</strong>
+                                    <ul style="margin: 5px 0 0 20px; color: #2d5a2d; font-size: 0.9rem;">
+                                        <li>Upload any size image (square, landscape, portrait)</li>
+                                        <li>Automatically cropped to 400x350px for perfect fit</li>
+                                        <li>No stretching or distortion</li>
+                                        <li>Centers the most important part of the image</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <img id="profilePreview" class="profile-preview" style="display: none;" />
+                            <input type="file" id="profilePicture" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="camera-options">
+                            <button type="button" id="uploadPhotoBtn" class="camera-btn">
+                                <i class="fas fa-upload"></i> Upload Photo
+                            </button>
+                            <button type="button" id="takePhotoBtn" class="camera-btn">
+                                <i class="fas fa-camera"></i> Take Photo
+                            </button>
+                            <button type="button" id="cropPhotoBtn" class="camera-btn">
+                                <i class="fas fa-crop"></i> Crop Photo
+                            </button>
+                        </div>
+                        <!-- Camera Modal -->
+                        <div id="cameraModal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <span class="close">&times;</span>
+                                <h3>Take Photo</h3>
+                                <video id="cameraVideo" autoplay playsinline></video>
+                                <canvas id="cameraCanvas" style="display: none;"></canvas>
+                                <div class="camera-controls">
+                                    <button type="button" id="captureBtn" class="camera-btn">
+                                        <i class="fas fa-camera"></i> Capture
+                                    </button>
+                                    <button type="button" id="retakeBtn" class="camera-btn" style="display: none;">
+                                        <i class="fas fa-redo"></i> Retake
+                                    </button>
+                                     <button type="button" id="usePhotoBtn" class="camera-btn" style="display: none;">
+                                         <i class="fas fa-check"></i> Use Photo
+                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Crop Modal -->
+                        <div id="cropModal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <span class="close">&times;</span>
+                                <h3>Crop Photo</h3>
+                                <div class="crop-container">
+                                    <img id="cropImage" src="" alt="Crop Image">
+                                    <div class="crop-overlay">
+                                        <div class="crop-box"></div>
+                                    </div>
+                                </div>
+                                <div class="crop-controls">
+                                    <button type="button" id="cropSaveBtn" class="camera-btn">
+                                        <i class="fas fa-check"></i> Save Crop
+                                    </button>
+                                    <button type="button" id="cropCancelBtn" class="camera-btn">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                                        <!-- Logo Upload for QR Code Center (Premium Feature) -->
+                    <div class="form-group logo-upload">
+                        <label for="qrLogo">Logo for QR Code Center (Premium)</label>
+                        <div class="upload-area" id="logoUploadArea">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-image"></i>
+                                <p>Click to upload logo for QR center</p>
+                                <span>JPG, PNG, GIF up to 2MB</span>
+                                <small class="premium-badge">Premium Feature</small>
+                            </div>
+                            <img id="logoPreview" class="logo-preview" style="display: none;" />
+                            <input type="file" id="qrLogo" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="logo-actions" id="logoActions" style="display: none;">
+                            <button type="button" id="removeLogoBtn" class="remove-logo-btn">
+                                <i class="fas fa-trash"></i> Remove Logo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobTitle">Job Title</label>
+                            <input type="text" id="jobTitle" placeholder="e.g., Software Engineer">
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Company</label>
+                            <input type="text" id="company" placeholder="e.g., Tech Corp">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" placeholder="e.g., Engineering, Sales, Marketing">
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mobile">Mobile Number *</label>
+                            <input type="tel" id="mobile" required placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" required placeholder="john@example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="workPhone">Work Phone</label>
+                        <input type="tel" id="workPhone" placeholder="+1 234 567 8900">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website" placeholder="https://example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Business Address</label>
+                        <textarea id="address" rows="3" placeholder="Enter your full business address"></textarea>
+                    </div>
+
+                    
+
+                    <!-- Social Media Links -->
+                    <h3><i class="fas fa-share-alt"></i> Social Media Links</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="linkedin">LinkedIn</label>
+                            <input type="url" id="linkedin" placeholder="https://linkedin.com/in/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="x">X (Twitter)</label>
+                            <input type="url" id="x" placeholder="https://x.com/username">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="facebook">Facebook</label>
+                            <input type="url" id="facebook" placeholder="https://facebook.com/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="instagram">Instagram</label>
+                            <input type="url" id="instagram" placeholder="https://instagram.com/username">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="youtube">YouTube</label>
+                        <input type="url" id="youtube" placeholder="https://youtube.com/@channel">
+                    </div>
+
+                    
+
+                    
+
+                    <!-- Premium Features Notice -->
+                    <div class="premium-notice">
+                        <div class="notice-header">
+                            <i class="fas fa-crown"></i>
+                            <h4>Premium Features</h4>
+                        </div>
+                        <div class="notice-content">
+                            <p><strong>Free:</strong> Basic QR Code Generation</p>
+                            <p><strong>Premium ($2/month or $9/year):</strong> Digital Business Card + Analytics + Logo in QR</p>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Digital Card Live Preview -->
+                    <div class="form-group">
+                        <label>Digital Business Card Preview</label>
+                        <div id="cardStylePreview" class="card-style-preview">
+                            <div class="digital-card-container">
+                                <div class="digital-card">
+                                    <div class="card-image-section">
+                                        <div class="card-placeholder" id="cardPlaceholder">
+                                            <i class="fas fa-user-circle"></i>
+                                            <p>Upload a profile picture to see your digital card</p>
+                                        </div>
+                                        <img id="cardProfileImage" class="card-profile-image" style="display: none;" alt="Profile">
+                                        <div class="card-qr-overlay" id="cardQROverlay">
+                                            <div class="qr-placeholder">
+                                                <i class="fas fa-qrcode"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-info-section">
+                                        <div>
+                                            <div class="card-name" id="cardName">Your Name</div>
+                                            <div class="card-title-dept" id="cardTitleDept">Job Title - Department</div>
+                                            <div class="card-title-underline"></div>
+                                            <div class="card-company" id="cardCompany">Company Name</div>
+                                        </div>
+                                        <div class="card-contact-info">
+                                            <div class="contact-item" id="cardCompanyContact" style="display: none;">
+                                                <i class="fas fa-building"></i>
+                                                <span id="cardCompanyText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardAddress" style="display: none;">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span id="cardAddressText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardMobile" style="display: none;">
+                                                <i class="fas fa-phone"></i>
+                                                <span id="cardMobileText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardEmail" style="display: none;">
+                                                <i class="fas fa-envelope"></i>
+                                                <span id="cardEmailText"></span>
+                                            </div>
+                                            <div class="contact-item" id="cardWebsite" style="display: none;">
+                                                <i class="fas fa-globe"></i>
+                                                <span id="cardWebsiteText"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Social Media Icons -->
+                                        <div class="card-social-media" id="cardSocialMedia">
+                                            <a href="#" class="social-icon" id="cardLinkedIn" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-linkedin"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardX" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-twitter"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardFacebook" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-facebook"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardInstagram" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-instagram"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" id="cardYouTube" style="display: none;" target="_blank" rel="noopener">
+                                                <i class="fab fa-youtube"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <small>Live preview of your digital business card</small>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="generate-btn">
+                        <i class="fas fa-qrcode"></i> Generate QR Code
+                    </button>
+                </form>
+            </div>
+
+            <div class="preview-section">
+                <div id="cardPreview">
+                    <h3>Preview</h3>
+                    <p>Fill the form to see your visiting card preview</p>
+                </div>
+
+                <div id="qrSection" style="display: none;">
+                    <h3><i class="fas fa-qrcode"></i> Generated QR Code</h3>
+                    <div class="qr-container" id="qrcode">
+                        <!-- QR code will be generated here -->
+                    </div>
+                    <div class="qr-actions">
+                        <button id="downloadQR" class="download-btn">
+                            <i class="fas fa-download"></i> Download QR Code
+                        </button>
+                        <button id="downloadVCard" class="download-btn secondary">
+                            <i class="fas fa-address-card"></i> Download vCard
+                        </button>
+                        <button id="downloadCard" class="download-btn secondary">
+                            <i class="fas fa-image"></i> Download Digital Card
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features-section">
+            <h2><i class="fas fa-star"></i> Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-qrcode"></i>
+                    <h3>QR Code Generation</h3>
+                    <p>Generate high-quality QR codes for your vCard that can be scanned by any smartphone.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-camera"></i>
+                    <h3>Profile Picture</h3>
+                    <p>Add your profile picture with camera capture and cropping options for a professional look.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-share-alt"></i>
+                    <h3>Social Media Integration</h3>
+                    <p>Include all your social media links in one convenient QR code for easy sharing.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-download"></i>
+                    <h3>Multiple Formats</h3>
+                    <p>Download your contact information as QR code image or vCard file for maximum compatibility.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Mobile Friendly</h3>
+                    <p>Fully responsive design that works perfectly on all devices and screen sizes.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-rocket"></i>
+                    <h3>Coming Soon</h3>
+                    <p>One link for multiple links, link shortener, and more exciting features are on the way!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LinQrius</h4>
+                    <p>Create professional digital visiting cards with QR codes. Share your contact information instantly with anyone, anywhere.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/">VCard QR</a></li>
+                        <li><a href="/link-shorten">Link Shorten</a></li>
+                        <li><a href="/cliqart">LinQart</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="terms.html">Terms & Conditions</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="sitemap.html">Sitemap</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-envelope"></i> linqrius@gmail.com</p>
+                        <button onclick="openContactForm()" class="contact-btn">
+                            <i class="fas fa-paper-plane"></i> Contact Us
+                        </button>
+                    </div>
+                    <div class="buy-me-coffee">
+                        <a href="https://buymeacoffee.com/spvinodmanb" target="_blank" class="coffee-btn">
+                            <i class="fas fa-coffee"></i> Buy Me a Coffee
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinQrius. All rights reserved.</p>
+            </div>
+        </footer>
+
+        <!-- Contact Modal -->
+        <div id="contactModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Contact Us</h3>
+                <form id="contactForm" class="contact-form">
+                    <div class="form-group">
+                        <label for="contactName">Name *</label>
+                        <input type="text" id="contactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">Email *</label>
+                        <input type="email" id="contactEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactSubject">Subject *</label>
+                        <input type="text" id="contactSubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">Message *</label>
+                        <textarea id="contactMessage" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Authentication Modal -->
+        <div id="authModal" class="modal" style="display: none;">
+            <div class="modal-content auth-modal">
+                <span class="close">&times;</span>
+                
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-form">
+                    <h3><i class="fas fa-sign-in-alt"></i> Sign In to LinQrius</h3>
+                    <p class="auth-subtitle">Welcome back! Sign in to access your account</p>
+                    <form id="loginFormSubmit">
+                        <div class="form-group">
+                            <label for="loginEmail">Email Address *</label>
+                            <input type="email" id="loginEmail" required placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password *</label>
+                            <input type="password" id="loginPassword" required placeholder="Enter your password">
+                        </div>
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="rememberMe">
+                                <span class="checkmark"></span>
+                                Remember me
+                            </label>
+                            <a href="#" onclick="openForgotPassword()" class="forgot-link">Forgot Password?</a>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Don't have an account? <a href="#" onclick="switchAuth('signup')">Sign Up</a></p>
+                    </div>
+                </div>
+
+                <!-- Signup Form -->
+                <div id="signupForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-user-plus"></i> Create Your LinQrius Account</h3>
+                    <p class="auth-subtitle">Join thousands of users creating professional digital cards</p>
+                    <form id="signupFormSubmit">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="signupFirstName">First Name *</label>
+                                <input type="text" id="signupFirstName" required placeholder="First name">
+                            </div>
+                            <div class="form-group">
+                                <label for="signupLastName">Last Name *</label>
+                                <input type="text" id="signupLastName" required placeholder="Last name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email Address *</label>
+                            <input type="email" id="signupEmail" required placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPhone">Phone Number (Optional)</label>
+                            <input type="tel" id="signupPhone" placeholder="+1 (555) 123-4567">
+                            <small>Required if you enable 2-Factor Authentication</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password *</label>
+                            <input type="password" id="signupPassword" required placeholder="Create a password">
+                            <small>Minimum 8 characters with letters and numbers</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupConfirmPassword">Confirm Password *</label>
+                            <input type="password" id="signupConfirmPassword" required placeholder="Confirm your password">
+                        </div>
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="enable2FA">
+                                <span class="checkmark"></span>
+                                Enable 2-Factor Authentication (SMS)
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="agreeTerms" required>
+                                <span class="checkmark"></span>
+                                I agree to the <a href="terms.html" target="_blank">Terms & Conditions</a>
+                            </label>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Already have an account? <a href="#" onclick="switchAuth('login')">Sign In</a></p>
+                    </div>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-key"></i> Reset Your Password</h3>
+                    <p class="auth-subtitle">Enter your email to receive a password reset link</p>
+                    <form id="forgotPasswordFormSubmit">
+                        <div class="form-group">
+                            <label for="forgotEmail">Email Address *</label>
+                            <input type="email" id="forgotEmail" required placeholder="Enter your email">
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-paper-plane"></i> Send Reset Link
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Remember your password? <a href="#" onclick="switchAuth('login')">Sign In</a></p>
+                    </div>
+                </div>
+
+                <!-- 2FA Verification Form (Login) -->
+                <div id="twoFAForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
+                    <p class="auth-subtitle">Enter the 6-digit code sent to your phone</p>
+                    <form id="twoFAForm">
+                        <div class="form-group">
+                            <label for="2faCode">Verification Code *</label>
+                            <input type="text" id="2faCode" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                            <small>Code expires in 5 minutes</small>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-check"></i> Verify & Sign In
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Didn't receive the code? <a href="#" onclick="resend2FACode()">Resend Code</a></p>
+                        <p><a href="#" onclick="switchAuth('login')">Back to Sign In</a></p>
+                    </div>
+                </div>
+
+                <!-- 2FA Verification Form (Signup) -->
+                <div id="twoFASignupForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-shield-alt"></i> Verify Your Phone Number</h3>
+                    <p class="auth-subtitle">Enter the 6-digit code sent to your phone to complete registration</p>
+                    <form id="twoFASignupForm">
+                        <div class="form-group">
+                            <label for="2faSignupCode">Verification Code *</label>
+                            <input type="text" id="2faSignupCode" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                            <small>Code expires in 5 minutes</small>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-check"></i> Verify & Create Account
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Didn't receive the code? <a href="#" onclick="resend2FASignupCode()">Resend Code</a></p>
+                        <p><a href="#" onclick="switchAuth('signup')">Back to Sign Up</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth-sms.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting... - LinQrius</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.linqrius.com/redirect">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Redirecting to your destination...">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="redirect-content">
+            <div class="redirect-card">
+                <div class="redirect-icon">
+                    <i class="fas fa-link"></i>
+                </div>
+                <h1>Redirecting...</h1>
+                <p>You are being redirected to your destination.</p>
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <p class="redirect-info">
+                    <small>If you are not redirected automatically, <a href="#" id="manualRedirect">click here</a></small>
+                </p>
+                <div class="back-link">
+                    <a href="/" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> Back to LinQrius
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get the short code from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        
+        if (code) {
+            // Fetch the original URL from the API
+            fetch(`/api/links/redirect/${code}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.originalUrl) {
+                        // Redirect to the original URL
+                        window.location.href = data.originalUrl;
+                    } else {
+                        showError('Link not found or expired');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('Error redirecting to destination');
+                });
+        } else {
+            showError('Invalid redirect link');
+        }
+        
+        function showError(message) {
+            document.querySelector('.redirect-card h1').textContent = 'Error';
+            document.querySelector('.redirect-card p').textContent = message;
+            document.querySelector('.loading-spinner').style.display = 'none';
+            document.querySelector('.redirect-info').style.display = 'none';
+        }
+        
+        // Manual redirect button
+        document.getElementById('manualRedirect').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (code) {
+                window.location.href = `/api/links/redirect/${code}`;
+            }
+        });
+    </script>
+
+    <style>
+        .redirect-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .redirect-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
+        }
+        
+        .redirect-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .redirect-card h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .redirect-card p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .loading-spinner {
+            margin: 30px 0;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .redirect-info {
+            margin: 20px 0;
+        }
+        
+        .redirect-info a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .back-link {
+            margin-top: 30px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</body>
+</html>

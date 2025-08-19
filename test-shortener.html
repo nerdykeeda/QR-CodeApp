@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Link Shortener</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .output {
+            background: #333;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 300px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 Link Shortener Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Create Short Link</h3>
+        <input type="url" id="testUrl" placeholder="Enter URL to shorten" value="https://google.com">
+        <button onclick="createShortLink()">Create Short Link</button>
+        
+        <div id="output1" class="output" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Test Generated URL</h3>
+        <button onclick="testGeneratedUrl()">Test Generated URL</button>
+        <button onclick="viewLocalStorage()">View LocalStorage</button>
+        
+        <div id="output2" class="output" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Manual Test</h3>
+        <input type="text" id="manualCode" placeholder="Enter short code">
+        <button onclick="testManualCode()">Test Code</button>
+        
+        <div id="output3" class="output" style="display: none;"></div>
+    </div>
+
+    <script>
+        let lastShortUrl = '';
+        let lastShortCode = '';
+
+        function createShortLink() {
+            const longUrl = document.getElementById('testUrl').value.trim();
+            
+            if (!longUrl) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            // Generate short code
+            const shortCode = generateShortCode();
+            const baseUrl = window.location.origin + window.location.pathname.replace('test-shortener.html', '');
+            const shortUrl = `${baseUrl}redirect.html?code=${shortCode}`;
+            const displayUrl = `LinQ/${shortCode}`;
+            
+            // Create link object
+            const linkObj = {
+                id: Date.now(),
+                originalUrl: longUrl,
+                shortUrl: shortUrl,
+                displayUrl: displayUrl,
+                shortCode: shortCode,
+                createdAt: new Date().toLocaleDateString(),
+                clicks: 0
+            };
+            
+            // Save to localStorage
+            let links = [];
+            try {
+                const saved = localStorage.getItem('linq_shortened_links');
+                links = saved ? JSON.parse(saved) : [];
+            } catch (error) {
+                console.error('Error loading existing links:', error);
+            }
+            
+            links.unshift(linkObj);
+            localStorage.setItem('linq_shortened_links', JSON.stringify(links));
+            
+            // Store for testing
+            lastShortUrl = shortUrl;
+            lastShortCode = shortCode;
+            
+            // Display result
+            const output = document.getElementById('output1');
+            output.style.display = 'block';
+            output.innerHTML = `
+                ✅ SHORT LINK CREATED:<br>
+                Original: ${longUrl}<br>
+                Display: ${displayUrl}<br>
+                Full URL: ${shortUrl}<br>
+                Short Code: ${shortCode}<br>
+                Base URL: ${baseUrl}<br>
+                <br>
+                🔗 <a href="${shortUrl}" target="_blank">Click to test</a>
+            `;
+        }
+
+        function generateShortCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 5; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function testGeneratedUrl() {
+            if (!lastShortUrl) {
+                alert('Please create a short link first');
+                return;
+            }
+            
+            // Open the generated URL
+            window.open(lastShortUrl, '_blank');
+        }
+
+        function viewLocalStorage() {
+            const saved = localStorage.getItem('linq_shortened_links');
+            const output = document.getElementById('output2');
+            output.style.display = 'block';
+            
+            if (saved) {
+                try {
+                    const links = JSON.parse(saved);
+                    output.innerHTML = `
+                        📦 LOCALSTORAGE CONTENTS:<br>
+                        Found ${links.length} links:<br>
+                        ${links.map(link => `
+                            - Code: ${link.shortCode} → ${link.originalUrl}
+                        `).join('<br>')}
+                        <br>
+                        Raw data: ${saved.substring(0, 200)}...
+                    `;
+                } catch (error) {
+                    output.innerHTML = `❌ ERROR parsing localStorage: ${error.message}`;
+                }
+            } else {
+                output.innerHTML = '❌ No data found in localStorage';
+            }
+        }
+
+        function testManualCode() {
+            const shortCode = document.getElementById('manualCode').value.trim();
+            if (!shortCode) {
+                alert('Please enter a short code');
+                return;
+            }
+            
+            const saved = localStorage.getItem('linq_shortened_links');
+            const output = document.getElementById('output3');
+            output.style.display = 'block';
+            
+            if (saved) {
+                try {
+                    const links = JSON.parse(saved);
+                    const link = links.find(l => l.shortCode === shortCode || l.shortCode === shortCode.toUpperCase());
+                    
+                    if (link) {
+                        output.innerHTML = `
+                            ✅ FOUND LINK:<br>
+                            Short Code: ${link.shortCode}<br>
+                            Original URL: ${link.originalUrl}<br>
+                            <br>
+                            🔗 <a href="${link.originalUrl}" target="_blank">Go to original</a>
+                        `;
+                    } else {
+                        output.innerHTML = `
+                            ❌ CODE NOT FOUND: ${shortCode}<br>
+                            Available codes: ${links.map(l => l.shortCode).join(', ')}
+                        `;
+                    }
+                } catch (error) {
+                    output.innerHTML = `❌ ERROR: ${error.message}`;
+                }
+            } else {
+                output.innerHTML = '❌ No links in localStorage';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius - Simple Redirect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 50px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+        }
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        input {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            font-size: 1.1rem;
+            margin: 10px;
+        }
+        button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .links-display {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .link-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .short-url {
+            background: #FFD700;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔗 LinQrius Simple Shortener</div>
+        <p>URL shortener with browser storage (works on same device)</p>
+        
+        <div class="input-group">
+            <input type="url" id="urlInput" placeholder="Enter URL to shorten" style="width: 80%;">
+            <button onclick="createShortLink()">Shorten</button>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="codeInput" placeholder="Enter short code to test" style="width: 60%;">
+            <button onclick="testCode()">Test Code</button>
+        </div>
+        
+        <div id="result" style="margin: 20px 0;"></div>
+        
+        <div class="links-display" id="linksList" style="display: none;">
+            <h3>Your Links:</h3>
+            <div id="linksContainer"></div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <button onclick="window.location.href='index.html'">🏠 Back to LinQrius</button>
+            <button onclick="showAllLinks()">📋 Show All Links</button>
+        </div>
+    </div>
+
+    <script>
+        function createShortLink() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+            
+            // Generate short code
+            const shortCode = generateShortCode();
+            
+            // Get existing links
+            let links = JSON.parse(localStorage.getItem('simple_links') || '[]');
+            
+            // Create link object
+            const linkObj = {
+                shortCode: shortCode,
+                originalUrl: url,
+                clicks: 0,
+                created: new Date().toLocaleDateString()
+            };
+            
+            // Save link
+            links.unshift(linkObj);
+            localStorage.setItem('simple_links', JSON.stringify(links));
+            
+            // Build URLs
+            const baseUrl = window.location.origin + window.location.pathname.replace('simple-redirect.html', '');
+            const redirectUrl = `${baseUrl}simple-redirect.html?go=${shortCode}`;
+            
+            // Show result
+            document.getElementById('result').innerHTML = `
+                <div style="background: rgba(0,255,0,0.2); padding: 20px; border-radius: 10px;">
+                    <h3>✅ Short Link Created!</h3>
+                    <p><strong>Original:</strong> ${url}</p>
+                    <p><strong>Short Code:</strong> <span class="short-url">LinQ/${shortCode}</span></p>
+                    <p><strong>URL to share:</strong></p>
+                    <div class="short-url" style="margin: 10px 0;">${redirectUrl}</div>
+                    <button onclick="copyToClipboard('${redirectUrl}')">📋 Copy URL</button>
+                    <button onclick="window.open('${redirectUrl}', '_blank')">🔗 Test Link</button>
+                </div>
+            `;
+            
+            document.getElementById('urlInput').value = '';
+        }
+        
+        function testCode() {
+            const code = document.getElementById('codeInput').value.trim().toUpperCase();
+            if (!code) {
+                alert('Please enter a short code');
+                return;
+            }
+            
+            // Remove 'LINQ/' if present
+            const cleanCode = code.replace(/^LINQ\//i, '');
+            
+            const links = JSON.parse(localStorage.getItem('simple_links') || '[]');
+            const link = links.find(l => l.shortCode === cleanCode);
+            
+            if (link) {
+                // Update clicks
+                link.clicks++;
+                localStorage.setItem('simple_links', JSON.stringify(links));
+                
+                document.getElementById('result').innerHTML = `
+                    <div style="background: rgba(0,255,0,0.2); padding: 20px; border-radius: 10px;">
+                        <h3>✅ Link Found!</h3>
+                        <p><strong>Code:</strong> ${cleanCode}</p>
+                        <p><strong>Goes to:</strong> ${link.originalUrl}</p>
+                        <p><strong>Clicks:</strong> ${link.clicks}</p>
+                        <button onclick="window.open('${link.originalUrl}', '_blank')">🚀 Go to Link</button>
+                    </div>
+                `;
+                
+                // Redirect after 2 seconds
+                setTimeout(() => {
+                    window.open(link.originalUrl, '_blank');
+                }, 2000);
+            } else {
+                document.getElementById('result').innerHTML = `
+                    <div style="background: rgba(255,0,0,0.2); padding: 20px; border-radius: 10px;">
+                        <h3>❌ Link Not Found</h3>
+                        <p>Short code "${cleanCode}" doesn't exist.</p>
+                        <p>Available codes: ${links.map(l => l.shortCode).join(', ')}</p>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('codeInput').value = '';
+        }
+        
+        function showAllLinks() {
+            const links = JSON.parse(localStorage.getItem('simple_links') || '[]');
+            const container = document.getElementById('linksContainer');
+            const display = document.getElementById('linksList');
+            
+            if (links.length === 0) {
+                container.innerHTML = '<p>No links created yet.</p>';
+            } else {
+                container.innerHTML = links.map(link => `
+                    <div class="link-item">
+                        <div><strong>LinQ/${link.shortCode}</strong> → <a href="${link.originalUrl}" target="_blank">${link.originalUrl}</a></div>
+                        <div style="font-size: 0.9em; color: #ccc;">Clicks: ${link.clicks} | Created: ${link.created}</div>
+                    </div>
+                `).join('');
+            }
+            
+            display.style.display = display.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function generateShortCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 5; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('URL copied to clipboard!');
+            }).catch(() => {
+                alert('Failed to copy URL');
+            });
+        }
+        
+        // Check if we're redirecting
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const shortCode = params.get('go');
+            
+            if (shortCode) {
+                // Auto-redirect
+                const links = JSON.parse(localStorage.getItem('simple_links') || '[]');
+                const link = links.find(l => l.shortCode === shortCode.toUpperCase());
+                
+                if (link) {
+                    link.clicks++;
+                    localStorage.setItem('simple_links', JSON.stringify(links));
+                    
+                    document.getElementById('result').innerHTML = `
+                        <div style="background: rgba(0,255,0,0.2); padding: 20px; border-radius: 10px;">
+                            <h3>🚀 Redirecting...</h3>
+                            <p>Taking you to: ${link.originalUrl}</p>
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        window.location.href = link.originalUrl;
+                    }, 2000);
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div style="background: rgba(255,0,0,0.2); padding: 20px; border-radius: 10px;">
+                            <h3>❌ Link Not Found</h3>
+                            <p>Short code "${shortCode}" doesn't exist.</p>
+                        </div>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

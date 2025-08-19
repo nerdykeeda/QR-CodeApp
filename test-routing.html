@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Routing - LinQrius</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #28a745;
+        }
+        .warning {
+            background: #ffc107;
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Routing Test Page</h1>
+        <p>This page tests if the routing between your app and verification page works correctly.</p>
+        
+        <h3>Test the Routing:</h3>
+        <p>Click these buttons to test different routing scenarios:</p>
+        
+        <button class="test-button" onclick="testRoute('link-shorten.html')">
+            🏠 Go to Main App
+        </button>
+        
+        <button class="test-button" onclick="testRoute('verification.html')">
+            ✅ Go to Verification Page
+        </button>
+        
+        <button class="test-button" onclick="testRoute('link-shorten.html?verified=true&email=test@example.com')">
+            🔗 Test Verification Redirect
+        </button>
+        
+        <button class="test-button" onclick="testRoute('link-shorten.html?action=reset&email=test@example.com')">
+            🔐 Test Password Reset Redirect
+        </button>
+        
+        <h3>What Should Happen:</h3>
+        <ol>
+            <li><strong>Main App:</strong> Should open your link shortener app</li>
+            <li><strong>Verification Page:</strong> Should show the beautiful verification page</li>
+            <li><strong>Verification Redirect:</strong> Should redirect from main app to verification page</li>
+            <li><strong>Password Reset:</strong> Should redirect from main app to verification page</li>
+        </ol>
+        
+        <h3>Current Status:</h3>
+        <div id="status">Click a button to test routing...</div>
+    </div>
+
+    <script>
+        function testRoute(url) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<strong>Testing:</strong> ${url}`;
+            
+            // Test if the page exists
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        statusDiv.innerHTML = `<strong>✅ Success:</strong> ${url} is accessible. Opening now...`;
+                        setTimeout(() => {
+                            window.location.href = url;
+                        }, 1000);
+                    } else {
+                        statusDiv.innerHTML = `<strong>❌ Error:</strong> ${url} returned status ${response.status}`;
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = `<strong>❌ Error:</strong> Could not access ${url}: ${error.message}`;
+                });
+        }
+        
+        // Show current page info
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<strong>Current Page:</strong> ${window.location.href}`;
+        });
+    </script>
+</body>
+</html>

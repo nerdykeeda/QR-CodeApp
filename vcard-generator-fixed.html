@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCard QR Generator - Digital Visiting Card</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script>
+        // Fallback QR code library loader
+        window.addEventListener('load', function() {
+            if (typeof QRCode === 'undefined') {
+                console.log('Loading QRCode library fallback...');
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+                script.onload = () => console.log('QRCode library loaded successfully');
+                script.onerror = () => console.error('Failed to load QRCode library from fallback');
+                document.head.appendChild(script);
+            }
+        });
+    </script>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    color: white;
+    margin-bottom: 40px;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.header h1 i {
+    margin-right: 15px;
+    color: #ffd700;
+}
+
+.header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.form-section {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.form-section h2 {
+    color: #4a5568;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.form-section h3 {
+    color: #4a5568;
+    margin: 30px 0 20px 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vcard-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.profile-upload .upload-area {
+    border: 3px dashed #cbd5e0;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-upload .upload-area:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #718096;
+}
+
+.upload-placeholder i {
+    font-size: 3rem;
+    color: #a0aec0;
+}
+
+.upload-placeholder p {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.upload-placeholder span {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.profile-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.generate-btn:active {
+    transform: translateY(0);
+}
+
+.preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.card-preview {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    min-height: 300px;
+}
+
+.card-preview h3 {
+    color: #4a5568;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+/* New Digital Business Card Design */
+.digital-card {
+    width: 350px;
+    height: 600px;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    margin: 0 auto;
+    position: relative;
+}
+
+.card-image-section {
+    height: 55%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.card-qr-overlay {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-info-section {
+    height: 45%;
+    padding: 25px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e91e63;
+    margin-bottom: 5px;
+    line-height: 1.2;
+}
+
+.card-title {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+
+.card-title-underline {
+    width: 100%;
+    height: 2px;
+    background: #e91e63;
+    margin-bottom: 15px;
+}
+
+.card-department {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.card-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.contact-item i {
+    width: 16px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.qr-section {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.qr-section h3 {
+    color: #4a5568;
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+}
+
+.qr-container {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 15px;
+    display: inline-block;
+    margin-bottom: 25px;
+}
+
+.qr-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.download-btn {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.download-btn:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+}
+
+.download-btn.secondary {
+    background: #667eea;
+}
+
+.download-btn.secondary:hover {
+    background: #5a67d8;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .form-section,
+    .card-preview,
+    .qr-section {
+        padding: 20px;
+    }
+    
+    .qr-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .digital-card {
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+        min-height: 500px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .header p {
+        font-size: 1rem;
+    }
+    
+    .digital-card {
+        width: 100%;
+        height: auto;
+        min-height: 450px;
+    }
+    
+    .card-info-section {
+        padding: 20px;
+    }
+    
+    .card-name {
+        font-size: 1.5rem;
+    }
+}
+
+.form-group input:invalid:not(:placeholder-shown) {
+    border-color: #f56565;
+    background: #fed7d7;
+}
+
+.form-group input:valid:not(:placeholder-shown) {
+    border-color: #48bb78;
+    background: #c6f6d5;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-qrcode"></i> VCard QR Generator</h1>
+            <p>Create your digital visiting card with QR code</p>
+        </header>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2>Personal Information</h2>
+                <form id="vcardForm" class="vcard-form">
+                    <div class="form-group profile-upload">
+                        <label for="profilePicture">Profile Picture</label>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-camera"></i>
+                                <p>Click to upload profile picture</p>
+                                <span>JPG, PNG, GIF up to 5MB</span>
+                            </div>
+                            <img id="profilePreview" class="profile-preview" style="display: none;" />
+                            <input type="file" id="profilePicture" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobTitle">Job Title</label>
+                            <input type="text" id="jobTitle" placeholder="e.g., Managing Director">
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Company</label>
+                            <input type="text" id="company" placeholder="e.g., Company Name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" placeholder="e.g., Department">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mobile">Mobile Number *</label>
+                            <input type="tel" id="mobile" required placeholder="+00 123 456 78">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" required placeholder="companyname@gmail.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website" placeholder="www.companywebsite.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" rows="3" placeholder="1234 Northwest Boulevard Washington, DC 20025"></textarea>
+                    </div>
+
+                    <button type="submit" class="generate-btn">
+                        <i class="fas fa-qrcode"></i> Generate Digital Card
+                    </button>
+                </form>
+            </div>
+
+            <div class="preview-section">
+                <div class="card-preview" id="cardPreview">
+                    <h3>Digital Business Card Preview</h3>
+                    <p>Fill the form to see your digital business card preview</p>
+                </div>
+
+                <div class="qr-section" id="qrSection" style="display: none;">
+                    <h3>Your QR Code</h3>
+                    <div class="qr-container">
+                        <canvas id="qrcode"></canvas>
+                    </div>
+                    <div class="qr-actions">
+                        <button id="downloadQR" class="download-btn">
+                            <i class="fas fa-download"></i> Download QR Code
+                        </button>
+                        <button id="downloadVCard" class="download-btn secondary">
+                            <i class="fas fa-address-card"></i> Download vCard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+class VCardGenerator {
+    constructor() {
+        this.profileImageData = null;
+        this.initializeEventListeners();
+        this.setupFormValidation();
+        this.prefillDemoData();
+    }
+
+    initializeEventListeners() {
+        document.getElementById('vcardForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.generateVCard();
+        });
+
+        document.getElementById('uploadArea').addEventListener('click', () => {
+            document.getElementById('profilePicture').click();
+        });
+
+        document.getElementById('profilePicture').addEventListener('change', (e) => {
+            this.handleProfilePictureUpload(e);
+        });
+
+        const formInputs = document.querySelectorAll('#vcardForm input, #vcardForm textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                this.updatePreview();
+            });
+        });
+
+        document.getElementById('downloadQR').addEventListener('click', () => {
+            this.downloadQRCode();
+        });
+
+        document.getElementById('downloadVCard').addEventListener('click', () => {
+            this.downloadVCardFile();
+        });
+    }
+
+    setupFormValidation() {
+        const mobileInput = document.getElementById('mobile');
+        mobileInput.addEventListener('input', (e) => {
+            this.validatePhoneNumber(e.target);
+        });
+
+        const emailInput = document.getElementById('email');
+        emailInput.addEventListener('input', (e) => {
+            this.validateEmail(e.target);
+        });
+    }
+
+    prefillDemoData() {
+        const demoValues = {
+            firstName: 'Dainel',
+            lastName: 'Jakson',
+            jobTitle: 'Managing Director',
+            company: 'Company Name',
+            department: 'Department',
+            mobile: '+00 123 456 78',
+            email: 'companyname@gmail.com',
+            website: 'www.companywebsite.com',
+            address: '1234 Northwest Boulevard Washington, DC 20025'
+        };
+
+        const applyIfEmpty = (id, value) => {
+            const element = document.getElementById(id);
+            if (element && !element.value) {
+                element.value = value;
+            }
+        };
+
+        Object.entries(demoValues).forEach(([id, value]) => applyIfEmpty(id, value));
+
+        this.updatePreview();
+        // Auto-generate QR so download buttons are available immediately
+        try {
+            this.generateVCard();
+        } catch (_) {
+            // no-op: user can click generate if auto-run fails
+        }
+    }
+
+    validatePhoneNumber(input) {
+        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        const isValid = phoneRegex.test(input.value.replace(/\s/g, ''));
+        
+        if (input.value && !isValid) {
+            input.setCustomValidity('Please enter a valid phone number');
+        } else {
+            input.setCustomValidity('');
+        }
+    }
+
+    validateEmail(input) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isValid = emailRegex.test(input.value);
+        
+        if (input.value && !isValid) {
+            input.setCustomValidity('Please enter a valid email address');
+        } else {
+            input.setCustomValidity('');
+        }
+    }
+
+    handleProfilePictureUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file (JPG, PNG, GIF)');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.profileImageData = e.target.result;
+            
+            const preview = document.getElementById('profilePreview');
+            const placeholder = document.querySelector('.upload-placeholder');
+            
+            preview.src = this.profileImageData;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            
+            this.updatePreview();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    getFormData() {
+        return {
+            firstName: document.getElementById('firstName').value.trim(),
+            lastName: document.getElementById('lastName').value.trim(),
+            jobTitle: document.getElementById('jobTitle').value.trim(),
+            company: document.getElementById('company').value.trim(),
+            department: document.getElementById('department').value.trim(),
+            mobile: document.getElementById('mobile').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            website: document.getElementById('website').value.trim(),
+            address: document.getElementById('address').value.trim(),
+            profileImage: this.profileImageData
+        };
+    }
+
+    updatePreview() {
+        const data = this.getFormData();
+        const preview = document.getElementById('cardPreview');
+        
+        if (!data.firstName && !data.lastName) {
+            preview.innerHTML = `
+                <h3>Digital Business Card Preview</h3>
+                <p>Fill the form to see your digital business card preview</p>
+            `;
+            return;
+        }
+
+        const fullName = `${data.firstName} ${data.lastName}`.trim();
+        
+        preview.innerHTML = `
+            <h3>Digital Business Card Preview</h3>
+            <div class="digital-card">
+                <div class="card-image-section">
+                    ${data.profileImage ? `<img src="${data.profileImage}" alt="Profile" class="card-profile-image">` : ''}
+                    <div class="card-qr-overlay" id="previewQR">
+                        <div style="width: 50px; height: 50px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                            <i class="fas fa-qrcode" style="color: #999; font-size: 20px;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-info-section">
+                    <div>
+                        <div class="card-name">${fullName}</div>
+                        <div class="card-title">${data.jobTitle || ''}</div>
+                        <div class="card-title-underline"></div>
+                        <div class="card-department">${data.department || ''}</div>
+                    </div>
+                    <div class="card-contact-info">
+                        ${data.address ? `<div class="contact-item"><i class="fas fa-map-marker-alt"></i><span>${data.address}</span></div>` : ''}
+                        ${data.mobile ? `<div class="contact-item"><i class="fas fa-phone"></i><span>${data.mobile}</span></div>` : ''}
+                        ${data.email ? `<div class="contact-item"><i class="fas fa-envelope"></i><span>${data.email}</span></div>` : ''}
+                        ${data.website ? `<div class="contact-item"><i class="fas fa-globe"></i><span>${data.website}</span></div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    generateVCardData(data) {
+        const fullName = `${data.firstName} ${data.lastName}`.trim();
+        
+        // Helper function to escape vCard special characters
+        const escapeVCardText = (text) => {
+            if (!text) return '';
+            return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
+        };
+        
+        let vcard = 'BEGIN:VCARD\r\n';
+        vcard += 'VERSION:3.0\r\n';
+        vcard += `FN:${escapeVCardText(fullName)}\r\n`;
+        vcard += `N:${escapeVCardText(data.lastName)};${escapeVCardText(data.firstName)};;;\r\n`;
+        
+        if (data.jobTitle) {
+            vcard += `TITLE:${escapeVCardText(data.jobTitle)}\r\n`;
+        }
+        
+        if (data.company) {
+            vcard += `ORG:${escapeVCardText(data.company)}\r\n`;
+        }
+        
+        if (data.department) {
+            vcard += `ROLE:${escapeVCardText(data.department)}\r\n`;
+        }
+        
+        if (data.mobile) {
+            vcard += `TEL;TYPE=CELL:${escapeVCardText(data.mobile)}\r\n`;
+        }
+        
+        if (data.email) {
+            vcard += `EMAIL:${escapeVCardText(data.email)}\r\n`;
+        }
+        
+        if (data.website) {
+            vcard += `URL:${escapeVCardText(data.website)}\r\n`;
+        }
+        
+        if (data.address) {
+            vcard += `ADR:;;${escapeVCardText(data.address)};;;;\r\n`;
+        }
+        
+        vcard += 'END:VCARD';
+        
+        console.log('Generated vCard:', vcard);
+        return vcard;
+    }
+
+    async generateVCard() {
+        const form = document.getElementById('vcardForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const data = this.getFormData();
+        const vCardData = this.generateVCardData(data);
+        
+        const generateBtn = document.querySelector('.generate-btn');
+        const originalHTML = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<div class="loading"></div> Generating...';
+        generateBtn.disabled = true;
+
+        try {
+            await this.generateQRCode(vCardData);
+            
+            document.getElementById('qrSection').style.display = 'block';
+            
+            document.getElementById('qrSection').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+            
+        } catch (error) {
+            console.error('Error generating QR code:', error);
+            let errorMessage = 'Error generating QR code. ';
+            
+            if (error.message.includes('QRCode library not loaded')) {
+                errorMessage += 'Please check your internet connection and refresh the page.';
+            } else if (error.message.includes('canvas element not found')) {
+                errorMessage += 'UI error detected. Please refresh the page.';
+            } else {
+                errorMessage += 'Please try again. If the problem persists, try with shorter text or without special characters.';
+            }
+            
+            alert(errorMessage);
+        } finally {
+            generateBtn.innerHTML = originalHTML;
+            generateBtn.disabled = false;
+        }
+    }
+
+    generateQRCode(vCardData) {
+        return new Promise((resolve, reject) => {
+            // Check if QRCode library is loaded
+            if (typeof QRCode === 'undefined') {
+                reject(new Error('QRCode library not loaded. Please check your internet connection.'));
+                return;
+            }
+
+            const canvas = document.getElementById('qrcode');
+            if (!canvas) {
+                reject(new Error('QR code canvas element not found'));
+                return;
+            }
+
+            console.log('Generating QR code with vCard data:', vCardData);
+            
+            try {
+                QRCode.toCanvas(canvas, vCardData, {
+                    width: 300,
+                    height: 300,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    },
+                    errorCorrectionLevel: 'M'
+                }, (error) => {
+                    if (error) {
+                        console.error('QRCode.toCanvas error:', error);
+                        reject(error);
+                    } else {
+                        console.log('QR code generated successfully');
+                        resolve();
+                    }
+                });
+            } catch (syncError) {
+                console.error('Synchronous error in QR code generation:', syncError);
+                reject(syncError);
+            }
+        });
+    }
+
+    downloadQRCode() {
+        const canvas = document.getElementById('qrcode');
+        const link = document.createElement('a');
+        link.download = 'vcard-qr-code.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    downloadVCardFile() {
+        const data = this.getFormData();
+        const vCardData = this.generateVCardData(data);
+        
+        const blob = new Blob([vCardData], { type: 'text/vcard' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${data.firstName}_${data.lastName}_vcard.vcf`;
+        link.click();
+        
+        URL.revokeObjectURL(link.href);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new VCardGenerator();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const uploadArea = document.getElementById('uploadArea');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        uploadArea.style.borderColor = '#667eea';
+        uploadArea.style.background = '#f0f4ff';
+    }
+    
+    function unhighlight() {
+        uploadArea.style.borderColor = '#cbd5e0';
+        uploadArea.style.background = '#f8fafc';
+    }
+    
+    uploadArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            const fileInput = document.getElementById('profilePicture');
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    }
+});
+    </script>
+</body>
+</html>

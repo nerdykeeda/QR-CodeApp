@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Supabase Email Verification Test</h1>
+    
+    <div>
+        <h3>Test Email Verification</h3>
+        <input type="email" id="testEmail" placeholder="Enter your email" style="padding: 10px; margin: 10px;">
+        <button onclick="testSignUp()" style="padding: 10px; margin: 10px;">Test Sign Up</button>
+    </div>
+    
+    <div id="result" style="margin: 20px; padding: 20px; border: 1px solid #ccc;"></div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://kdbwxqstkzjzwjtsjidl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkYnd4cXN0a3pqendqdHNqaWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwOTc1MzEsImV4cCI6MjA3MDY3MzUzMX0.QvJXN03__Wzi4jptgKVapP5QvmtddSHB38y6VY2xteQ';
+
+        // Create Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testSignUp() {
+            const email = document.getElementById('testEmail').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!email) {
+                resultDiv.innerHTML = '<p style="color: red;">Please enter an email address</p>';
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<p>Testing sign up...</p>';
+                
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: 'testpassword123',
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/link-shorten.html?verified=true`
+                    }
+                });
+
+                if (error) {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                    console.error('Sign up error:', error);
+                } else {
+                    resultDiv.innerHTML = `
+                        <p style="color: green;">✅ Sign up successful!</p>
+                        <p><strong>User ID:</strong> ${data.user?.id || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${data.user?.email || 'N/A'}</p>
+                        <p><strong>Email Confirmed:</strong> ${data.user?.email_confirmed_at ? 'Yes' : 'No'}</p>
+                        <p><strong>Verification Sent:</strong> ${data.user?.email_confirmed_at ? 'No' : 'Yes'}</p>
+                        <p><strong>Message:</strong> ${data.user?.email_confirmed_at ? 'User already verified' : 'Check your email for verification link'}</p>
+                    `;
+                    console.log('Sign up data:', data);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Exception: ${error.message}</p>`;
+                console.error('Exception:', error);
+            }
+        }
+
+        // Check current session
+        async function checkSession() {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            console.log('Current session:', session);
+            console.log('Session error:', error);
+        }
+
+        // Listen to auth changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event, session);
+            if (session) {
+                console.log('User email confirmed:', session.user.email_confirmed_at);
+            }
+        });
+
+        // Check session on load
+        checkSession();
+    </script>
+</body>
+</html>

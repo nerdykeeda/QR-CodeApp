@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius Profile - Manage Account Settings & Personal Information</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.linqrius.com/profile">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Manage your LinQrius profile, account settings, security preferences, and personal information for your digital business card services.">
+    <meta name="keywords" content="LinQrius profile, account settings, user profile, personal information, account management, security settings, user preferences">
+    <meta name="author" content="LinQrius Team">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="LinQrius Profile - Manage Account Settings & Personal Information">
+    <meta property="og:description" content="Manage your LinQrius profile, account settings, security preferences, and personal information for your digital business card services.">
+    <meta property="og:url" content="https://www.linqrius.com/profile">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LinQrius">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="LinQrius Profile - Manage Account Settings & Personal Information">
+    <meta name="twitter:description" content="Manage your LinQrius profile, account settings, security preferences, and personal information for your digital business card services.">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "LinQrius Profile",
+        "description": "User profile management page for LinQrius digital business card services",
+        "url": "https://www.linqrius.com/profile",
+        "publisher": {
+            "@type": "Organization",
+            "name": "LinQrius",
+            "url": "https://www.linqrius.com"
+        }
+    }
+    </script>
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    
+    <!-- Font Awesome with async loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    
+    <!-- QRCode library with async loading -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+                    <p>Manage your account and preferences</p>
+                </div>
+                <nav class="nav-menu">
+                    <ul>
+                        <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="/cliqart"><i class="fas fa-store"></i> LinQart</a></li>
+                    </ul>
+                </nav>
+                <div class="user-menu" id="userMenu">
+                    <div class="user-info">
+                        <span class="user-name" id="userName">User</span>
+                        <div class="user-dropdown">
+                            <button class="dropdown-btn" onclick="toggleUserDropdown()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.html" class="active"><i class="fas fa-user"></i> Profile</a>
+                                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                                <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="profile-container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <div class="avatar-circle" id="avatarCircle">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <button class="change-avatar-btn" onclick="changeAvatar()">
+                        <i class="fas fa-camera"></i> Change Photo
+                    </button>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                </div>
+                <div class="profile-info">
+                    <h2 id="profileDisplayName">Loading...</h2>
+                    <p id="profileEmail">Loading...</p>
+                    <span class="profile-badge" id="profilePlan">Free Plan</span>
+                </div>
+            </div>
+
+            <!-- Profile Tabs -->
+            <div class="profile-tabs">
+                <button class="tab-btn active" onclick="switchTab('personal')">
+                    <i class="fas fa-user"></i> Personal Info
+                </button>
+                <button class="tab-btn" onclick="switchTab('security')">
+                    <i class="fas fa-shield-alt"></i> Security
+                </button>
+                <button class="tab-btn" onclick="switchTab('billing')">
+                    <i class="fas fa-credit-card"></i> Billing
+                </button>
+                <button class="tab-btn" onclick="switchTab('preferences')">
+                    <i class="fas fa-cog"></i> Preferences
+                </button>
+            </div>
+
+            <!-- Personal Info Tab -->
+            <div class="tab-content active" id="personalTab">
+                <div class="profile-section">
+                    <h3><i class="fas fa-user"></i> Personal Information</h3>
+                    <form id="personalInfoForm" class="profile-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name *</label>
+                                <input type="text" id="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name *</label>
+                                <input type="text" id="lastName" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Company</label>
+                            <input type="text" id="company" placeholder="Your company name">
+                        </div>
+                        <div class="form-group">
+                            <label for="bio">Bio</label>
+                            <textarea id="bio" rows="3" placeholder="Tell us about yourself"></textarea>
+                        </div>
+                        <button type="submit" class="save-btn">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div class="tab-content" id="securityTab">
+                <div class="profile-section">
+                    <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                    
+                    <!-- Change Password -->
+                    <div class="security-card">
+                        <h4>Change Password</h4>
+                        <form id="passwordForm" class="profile-form">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password *</label>
+                                <input type="password" id="currentPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">New Password *</label>
+                                <input type="password" id="newPassword" required>
+                                <small>Minimum 8 characters with letters and numbers</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm New Password *</label>
+                                <input type="password" id="confirmPassword" required>
+                            </div>
+                            <button type="submit" class="save-btn">
+                                <i class="fas fa-key"></i> Update Password
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Two-Factor Authentication -->
+                    <div class="security-card">
+                        <h4>Two-Factor Authentication</h4>
+                        <p>Add an extra layer of security to your account</p>
+                        <div class="security-option">
+                            <div class="option-info">
+                                <strong>SMS Authentication</strong>
+                                <p>Receive codes via text message</p>
+                            </div>
+                            <button class="enable-btn" onclick="enable2FA('sms')">
+                                <i class="fas fa-mobile-alt"></i> Enable
+                            </button>
+                        </div>
+                        <div class="security-option">
+                            <div class="option-info">
+                                <strong>Authenticator App</strong>
+                                <p>Use Google Authenticator or similar app</p>
+                            </div>
+                            <button class="enable-btn" onclick="enable2FA('app')">
+                                <i class="fas fa-qrcode"></i> Enable
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Tab -->
+            <div class="tab-content" id="billingTab">
+                <div class="profile-section">
+                    <h3><i class="fas fa-credit-card"></i> Billing & Subscription</h3>
+                    
+                    <!-- Current Plan -->
+                    <div class="billing-card">
+                        <h4>Current Plan</h4>
+                        <div class="current-plan">
+                            <div class="plan-info">
+                                <h5 id="currentPlanName">Free Plan</h5>
+                                <p id="currentPlanPrice">$0.00/month</p>
+                                <p id="currentPlanFeatures">Up to 5 products, Basic features</p>
+                            </div>
+                            <button class="upgrade-btn" onclick="showUpgradeModal()">
+                                <i class="fas fa-arrow-up"></i> Upgrade Plan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="billing-card">
+                        <h4>Payment Methods</h4>
+                        <div class="payment-methods" id="paymentMethods">
+                            <div class="no-payment-methods">
+                                <i class="fas fa-credit-card"></i>
+                                <p>No payment methods added</p>
+                                <button class="add-payment-btn" onclick="addPaymentMethod()">
+                                    <i class="fas fa-plus"></i> Add Payment Method
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Billing History -->
+                    <div class="billing-card">
+                        <h4>Billing History</h4>
+                        <div class="billing-history" id="billingHistory">
+                            <div class="no-billing-history">
+                                <i class="fas fa-receipt"></i>
+                                <p>No billing history available</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Tab -->
+            <div class="tab-content" id="preferencesTab">
+                <div class="profile-section">
+                    <h3><i class="fas fa-cog"></i> Preferences</h3>
+                    
+                    <!-- Notifications -->
+                    <div class="preferences-card">
+                        <h4>Email Notifications</h4>
+                        <div class="preference-option">
+                            <label class="switch">
+                                <input type="checkbox" id="emailNotifications" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <div class="option-info">
+                                <strong>Account Updates</strong>
+                                <p>Receive important account notifications</p>
+                            </div>
+                        </div>
+                        <div class="preference-option">
+                            <label class="switch">
+                                <input type="checkbox" id="marketingEmails">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="option-info">
+                                <strong>Marketing Emails</strong>
+                                <p>Receive tips, updates, and promotional content</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data & Privacy -->
+                    <div class="preferences-card">
+                        <h4>Data & Privacy</h4>
+                        <div class="preference-option">
+                            <label class="switch">
+                                <input type="checkbox" id="analytics" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <div class="option-info">
+                                <strong>Usage Analytics</strong>
+                                <p>Help us improve LinQrius by sharing anonymous usage data</p>
+                            </div>
+                        </div>
+                        <div class="data-actions">
+                            <button class="data-btn" onclick="exportData()">
+                                <i class="fas fa-download"></i> Export My Data
+                            </button>
+                            <button class="data-btn danger" onclick="deleteAccount()">
+                                <i class="fas fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LinQrius</h4>
+                    <p>Create professional digital visiting cards with QR codes. Share your contact information instantly with anyone, anywhere.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinQrius. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>
