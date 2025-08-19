@@ -1,5 +1,1 @@
-[33m316c984[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add API key authentication system and Vercel deployment config
-[33mb4fea7c[m Remove vercel.json for simple auto-detection deployment
-[33me599b00[m Fix Vercel deployment: Move files back to root directory
-[33md5e99a8[m Fix Vercel config: Use modern rewrites and proper outputDirectory
-[33me336fe8[m Fix Vercel deployment: Create public directory structure
+* [32mmaster[m e75095a Add Supabase verification system + SEO improvements + all updates
