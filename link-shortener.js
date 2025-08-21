@@ -1,7 +1,7 @@
 // LinQrius Link Shortener with API Key Authentication
 class LinkShortener {
     constructor() {
-        this.apiKey = 'sk-linqrius-2024-secure-key-12345'; // Default API key
+        this.apiKey = window.API_CONFIG?.keyName || 'linqrius-main'; // Use secure config
         this.baseUrl = window.location.origin;
         this.init();
     }
@@ -13,27 +13,9 @@ class LinkShortener {
     }
 
     setupApiKeyInput() {
-        // Add API key input to the form
-        const form = document.querySelector('.shortener-form');
-        if (form) {
-            const apiKeyGroup = document.createElement('div');
-            apiKeyGroup.className = 'form-group';
-            apiKeyGroup.innerHTML = `
-                <label for="apiKey">API Key:</label>
-                <input type="password" id="apiKey" class="form-control" 
-                       value="${this.apiKey}" placeholder="Enter your API key">
-                <small class="form-text">Your API key is required to create short links</small>
-            `;
-            
-            // Insert before the first form group
-            const firstGroup = form.querySelector('.form-group');
-            form.insertBefore(apiKeyGroup, firstGroup);
-            
-            // Update API key when input changes
-            document.getElementById('apiKey').addEventListener('input', (e) => {
-                this.apiKey = e.target.value;
-            });
-        }
+        // API key input is hidden from frontend but functionality remains
+        // The API key is automatically set from the secure configuration
+        console.log('API key input hidden from frontend - using secure configuration');
     }
 
     setupEventListeners() {
@@ -82,8 +64,10 @@ class LinkShortener {
             return;
         }
 
+        // API key is automatically set from secure configuration
         if (!this.apiKey) {
-            this.showError('Please enter your API key');
+            console.error('API key not available');
+            this.showError('Configuration error. Please refresh the page.');
             return;
         }
 

@@ -117,8 +117,8 @@ STRIPE_YEARLY_PRICE_ID=price_yyy
 
 ### **After (Razorpay)**
 ```bash
-RAZORPAY_KEY_ID=rzp_live_R7tco6KsmUQMI8
-RAZORPAY_KEY_SECRET=rh63PdDfRt72didyOF09nClz
+RAZORPAY_KEY_ID=rzp_live_R7zgJneUOh5Y0O
+RAZORPAY_KEY_SECRET=78vBccnFX1btd7tiBiaC9gDP
 RAZORPAY_WEBHOOK_SECRET=your-webhook-secret
 ```
 

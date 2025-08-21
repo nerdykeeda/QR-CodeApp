@@ -2334,7 +2334,7 @@ class AuthSystem {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-API-Key': 'sk-linqrius-2024-secure-key-12345'
+                    'X-API-Key': window.API_CONFIG?.keyName || 'linqrius-main'
                 },
                 body: JSON.stringify({
                     userId: this.currentUser.id,

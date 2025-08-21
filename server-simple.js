@@ -151,9 +151,9 @@ app.use(async (req, res, next) => {
 
 // API Key authentication
 const API_KEYS = {
-    'linqrius-main': 'sk-linqrius-2024-secure-key-12345',
-    'linqrius-admin': 'sk-linqrius-admin-2024-67890',
-    'linqrius-test': 'sk-linqrius-test-2024-abcde'
+    'linqrius-main': process.env.LINQRIUS_MAIN_API_KEY || 'sk-linqrius-2024-secure-key-12345',
+    'linqrius-admin': process.env.LINQRIUS_ADMIN_API_KEY || 'sk-linqrius-admin-2024-67890',
+    'linqrius-test': process.env.LINQRIUS_TEST_API_KEY || 'sk-linqrius-test-2024-abcde'
 };
 
 const authenticateApiKey = (req, res, next) => {
@@ -1227,78 +1227,9 @@ app.post('/api/auth/verify-otp', authenticateApiKey, async (req, res) => {
 });
 
 // User management endpoints
-app.post('/api/auth/register', authenticateApiKey, async (req, res) => {
-    try {
-        const { phone, password } = req.body;
-        
-        if (!phone || !password) {
-            return res.status(400).json({ error: 'Phone number and password are required' });
-        }
-        
-        // Check if user already exists
-        if (inMemoryUsers.has(phone)) {
-            return res.status(400).json({ error: 'User already exists' });
-        }
-        
-        // Create new user
-        const user = {
-            id: 'user_' + Date.now(),
-            phone: phone,
-            password: password, // In production, hash this password!
-            createdAt: new Date().toISOString(),
-            links: []
-        };
-        
-        inMemoryUsers.set(phone, user);
-        
-        res.json({ 
-            success: true, 
-            message: 'User registered successfully',
-            user: {
-                id: user.id,
-                phone: user.phone,
-                createdAt: user.createdAt
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).json({ error: 'Failed to register user' });
-    }
-});
+// Removed duplicate auth endpoint to prevent conflicts
 
-app.post('/api/auth/login', authenticateApiKey, async (req, res) => {
-    try {
-        const { phone, password } = req.body;
-        
-        if (!phone || !password) {
-            return res.status(400).json({ error: 'Phone number and password are required' });
-        }
-        
-        const user = inMemoryUsers.get(phone);
-        
-        if (!user || user.password !== password) { // In production, use proper password comparison!
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        
-        // Update last login
-        user.lastLogin = new Date();
-        
-        res.json({ 
-            success: true, 
-            message: 'Login successful',
-            user: {
-                id: user.id,
-                phone: user.phone,
-                lastLogin: user.lastLogin
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error logging in:', error);
-        res.status(500).json({ error: 'Failed to login' });
-    }
-});
+// Removed duplicate auth endpoint to prevent conflicts
 
 // Analytics API endpoints
 app.get('/api/analytics/dashboard', authenticateApiKey, async (req, res) => {

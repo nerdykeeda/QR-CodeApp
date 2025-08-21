@@ -19,7 +19,7 @@ class LinQriusDashboard {
             return;
         }
 
-        this.loadUserData();
+        await this.loadUserData();
         this.setupEventListeners();
         this.updateDashboard();
         this.initializeCharts();
@@ -30,17 +30,69 @@ class LinQriusDashboard {
         return savedUser ? JSON.parse(savedUser) : null;
     }
 
-    loadUserData() {
-        // Load stores
+    async loadUserData() {
+        // First try to load from Supabase (new functionality)
+        await this.loadSupabaseData();
+        
+        // Then load from localStorage (existing logic - untouched)
         const allStores = JSON.parse(localStorage.getItem('linqrius_stores') || '[]');
-        this.userStores = allStores.filter(store => store.userId === this.currentUser.id);
+        this.userStores = this.userStores.concat(allStores.filter(store => store.userId === this.currentUser.id));
         
-        // Load shortened links
         const allLinks = JSON.parse(localStorage.getItem('linqrius_shortened_links') || '[]');
-        this.userLinks = allLinks.filter(link => link.userId === this.currentUser.id);
+        this.userLinks = this.userLinks.concat(allLinks.filter(link => link.userId === this.currentUser.id));
         
-        // Calculate stats
+        // Calculate stats (existing logic - untouched)
         this.calculateStats();
+    }
+
+    async loadSupabaseData() {
+        try {
+            // Initialize Supabase client using the global supabase instance
+            const supabase = window.supabase;
+            
+            // Get current user from Supabase auth
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            
+            if (userError || !user) {
+                console.log('No Supabase user found, using localStorage only');
+                this.userStores = [];
+                this.userLinks = [];
+                return;
+            }
+
+            // Fetch stores from Supabase (existing logic preserved)
+            const { data: stores, error: storesError } = await supabase
+                .from('stores')
+                .select('*')
+                .eq('user_id', user.id);
+
+            if (storesError) {
+                console.error('Error fetching stores:', storesError);
+                this.userStores = [];
+            } else {
+                this.userStores = stores || [];
+                console.log('Loaded stores from Supabase:', this.userStores.length);
+            }
+
+            // Fetch links from Supabase (existing logic preserved)
+            const { data: links, error: linksError } = await supabase
+                .from('user_links')
+                .select('*')
+                .eq('user_id', user.id);
+
+            if (linksError) {
+                console.error('Error fetching links:', linksError);
+                this.userLinks = [];
+            } else {
+                this.userLinks = links || [];
+                console.log('Loaded links from Supabase:', this.userLinks.length);
+            }
+
+        } catch (error) {
+            console.error('Error loading Supabase data:', error);
+            this.userStores = [];
+            this.userLinks = [];
+        }
     }
 
     calculateStats() {
@@ -157,9 +209,9 @@ class LinQriusDashboard {
     updateStats() {
         // Update stats display
         const statsElements = {
-            totalStores: document.getElementById('totalStores'),
-            totalProducts: document.getElementById('totalProducts'),
-            totalLinks: document.getElementById('totalLinks'),
+            totalStores: document.getElementById('storeCount'),
+            totalProducts: document.getElementById('vcardCount'),
+            totalLinks: document.getElementById('linkCount'),
             totalViews: document.getElementById('totalViews'),
             monthlyGrowth: document.getElementById('monthlyGrowth')
         };
@@ -434,3 +486,10 @@ function showNotification(message, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
     window.dashboard = new LinQriusDashboard();
 });
+
+// Global tab switching function (for HTML onclick handlers)
+function switchDashTab(tabName) {
+    if (window.dashboard) {
+        window.dashboard.switchTab(tabName);
+    }
+}

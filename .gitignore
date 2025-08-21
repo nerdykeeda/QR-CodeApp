@@ -131,3 +131,4 @@ icons/*.zip
 # Sensitive configuration files
 config.js
 payment-service.js
+api-config.js
