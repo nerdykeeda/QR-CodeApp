@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius Dashboard - Manage Digital Business Cards, QR Codes & Analytics</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.linqrius.com/dashboard">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Access your LinQrius dashboard to manage digital business cards, QR codes, link analytics, and track your professional networking performance.">
+    <meta name="keywords" content="LinQrius dashboard, digital business cards, QR code management, link analytics, professional networking, business card analytics, QR code tracking">
+    <meta name="author" content="LinQrius Team">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="LinQrius Dashboard - Manage Digital Business Cards & Analytics">
+    <meta property="og:description" content="Access your LinQrius dashboard to manage digital business cards, QR codes, and track your professional networking performance.">
+    <meta property="og:url" content="https://www.linqrius.com/dashboard">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LinQrius">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="LinQrius Dashboard - Manage Digital Business Cards & Analytics">
+    <meta name="twitter:description" content="Access your LinQrius dashboard to manage digital business cards, QR codes, and track your professional networking performance.">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "LinQrius Dashboard",
+        "description": "Dashboard for managing digital business cards, QR codes, and analytics",
+        "url": "https://www.linqrius.com/dashboard",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    
+    <!-- Font Awesome with async loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    
+    <!-- QRCode library with async loading -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                    <p>Manage all your LinQrius creations</p>
+                </div>
+                <nav class="nav-menu">
+                    <ul>
+                        <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="/cliqart"><i class="fas fa-store"></i> LinQart</a></li>
+                    </ul>
+                </nav>
+                <div class="user-menu" id="userMenu">
+                    <div class="user-info">
+                        <span class="user-name" id="userName">User</span>
+                        <div class="user-dropdown">
+                            <button class="dropdown-btn" onclick="toggleUserDropdown()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                                <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                                <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            <!-- Dashboard Stats -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="vcardCount">0</h3>
+                        <p>VCard QR Codes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="storeCount">0</h3>
+                        <p>LinQart Stores</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="linkCount">0</h3>
+                        <p>Shortened Links</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalViews">0</h3>
+                        <p>Total Views</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                <div class="action-cards">
+                    <a href="/" class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <div class="action-info">
+                            <h3>Create VCard QR</h3>
+                            <p>Generate a digital business card</p>
+                        </div>
+                    </a>
+                    <a href="/cliqart" class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="action-info">
+                            <h3>Build Store</h3>
+                            <p>Create a new LinQart store</p>
+                        </div>
+                    </a>
+                    <a href="/link-shorten" class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div class="action-info">
+                            <h3>Shorten Link</h3>
+                            <p>Create a short, trackable link</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dashboard Tabs -->
+            <div class="dashboard-tabs">
+                <button class="dash-tab-btn active" onclick="switchDashTab('stores')">
+                    <i class="fas fa-store"></i> My Stores
+                </button>
+                <button class="dash-tab-btn" onclick="switchDashTab('links')">
+                    <i class="fas fa-link"></i> My Links
+                </button>
+                <button class="dash-tab-btn" onclick="switchDashTab('analytics')">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </button>
+            </div>
+
+            <!-- My Stores Tab -->
+            <div class="dash-tab-content active" id="storesTab">
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-store"></i> My LinQart Stores</h2>
+                        <a href="cliqart.html" class="primary-btn">
+                            <i class="fas fa-plus"></i> Create New Store
+                        </a>
+                    </div>
+                    <div id="storesList" class="dashboard-grid">
+                        <div class="empty-dashboard-state">
+                            <i class="fas fa-store"></i>
+                            <h3>No Stores Yet</h3>
+                            <p>Create your first LinQart store to start selling online</p>
+                            <a href="cliqart.html" class="primary-btn">
+                                <i class="fas fa-plus"></i> Create Your First Store
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Links Tab -->
+            <div class="dash-tab-content" id="linksTab">
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-link"></i> My Shortened Links</h2>
+                        <a href="link-shorten.html" class="primary-btn">
+                            <i class="fas fa-plus"></i> Create New Link
+                        </a>
+                    </div>
+                    <div id="linksList" class="dashboard-table">
+                        <div class="empty-dashboard-state">
+                            <i class="fas fa-link"></i>
+                            <h3>No Links Yet</h3>
+                            <p>Create your first shortened link to start tracking clicks</p>
+                            <a href="link-shorten.html" class="primary-btn">
+                                <i class="fas fa-plus"></i> Create Your First Link
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="dash-tab-content" id="analyticsTab">
+                <div class="dashboard-section">
+                    <h2><i class="fas fa-chart-bar"></i> Analytics</h2>
+                    
+                    <!-- Analytics Summary -->
+                    <div class="analytics-summary">
+                        <div class="analytics-card">
+                            <h3>This Month</h3>
+                            <div class="analytics-metric">
+                                <span class="metric-value" id="monthlyViews">0</span>
+                                <span class="metric-label">Total Views</span>
+                            </div>
+                            <div class="analytics-change positive">
+                                <i class="fas fa-arrow-up"></i> +0%
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Most Popular</h3>
+                            <div class="analytics-metric">
+                                <span class="metric-value" id="popularItem">-</span>
+                                <span class="metric-label">Top Performing</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Conversion Rate</h3>
+                            <div class="analytics-metric">
+                                <span class="metric-value">0%</span>
+                                <span class="metric-label">Click Through Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="recent-activity">
+                        <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+                        <div id="recentActivity" class="activity-list">
+                            <div class="no-activity">
+                                <i class="fas fa-chart-line"></i>
+                                <p>No recent activity to display</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Details Modal -->
+        <div id="storeModal" class="modal" style="display: none;">
+            <div class="modal-content large-modal">
+                <span class="close">&times;</span>
+                <div id="storeModalContent">
+                    <!-- Store details will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LinQrius</h4>
+                    <p>Create professional digital visiting cards with QR codes. Share your contact information instantly with anyone, anywhere.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinQrius. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

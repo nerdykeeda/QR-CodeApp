@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius - LinQart Web Store Creator</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.linqrius.com/cliqart.html">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Create your professional web store in minutes with LinQart. Multiple products, custom branding, and share one simple link with your customers. No coding required!">
+    <meta name="keywords" content="web store creator, online store, e-commerce, store builder, product catalog, business store, LinQart">
+    <meta name="author" content="LinQrius">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="LinQrius - LinQart Web Store Creator">
+    <meta property="og:description" content="Create your professional web store in minutes with LinQart. Multiple products, custom branding, and share one simple link with your customers. No coding required!">
+    <meta property="og:url" content="https://www.linqrius.com/cliqart.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LinQrius">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LinQrius - LinQart Web Store Creator">
+    <meta name="twitter:description" content="Create your professional web store in minutes with LinQart. Multiple products, custom branding, and share one simple link with your customers. No coding required!">
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    
+    <!-- Font Awesome with async loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- QRCode library with async loading -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-store"></i> LinQrius LinQart</h1>
+                    <p>Create your professional web store in minutes</p>
+                </div>
+                <nav class="nav-menu">
+                    <ul>
+                        <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="/"><i class="fas fa-qrcode"></i> VCard QR</a></li>
+                        <li><a href="/link-shorten"><i class="fas fa-link"></i> Link Shorten</a></li>
+                        <li><a href="/cliqart" class="active"><i class="fas fa-store"></i> LinQart</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons">
+                    <button class="auth-btn login-btn" onclick="openAuthModal('login')">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                    <button class="auth-btn signup-btn" onclick="openAuthModal('signup')">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
+                </div>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-info">
+                        <span class="user-name" id="userName">User</span>
+                        <div class="user-dropdown">
+                            <button class="dropdown-btn" onclick="toggleUserDropdown()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                                <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="cliqart-hero">
+            <div class="hero-content">
+                <h2><i class="fas fa-rocket"></i> Transform Your Business with LinQart</h2>
+                <p>Create a stunning web store with multiple products, custom branding, and share one simple link with your customers. No coding required!</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <h3>10K+</h3>
+                        <p>Stores Created</p>
+                    </div>
+                    <div class="stat">
+                        <h3>500K+</h3>
+                        <p>Products Listed</p>
+                    </div>
+                    <div class="stat">
+                        <h3>98%</h3>
+                        <p>Customer Satisfaction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content cliqart-content">
+            <!-- Store Customization Section -->
+            <div class="store-setup-section">
+                <h2><i class="fas fa-paint-brush"></i> Customize Your Store</h2>
+                
+                <div class="customization-grid">
+                    <!-- Store Information -->
+                    <div class="custom-card">
+                        <h3><i class="fas fa-info-circle"></i> Store Information</h3>
+                        <form id="storeInfoForm" class="store-form">
+                            <div class="form-group">
+                                <label for="storeName">Store Name *</label>
+                                <input type="text" id="storeName" required placeholder="Enter your store name">
+                            </div>
+                            <div class="form-group">
+                                <label for="storeDescription">Store Description</label>
+                                <textarea id="storeDescription" rows="3" placeholder="Brief description of your store"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="storeCategory">Category</label>
+                                <select id="storeCategory">
+                                    <option value="">Select Category</option>
+                                    <option value="fashion">Fashion & Clothing</option>
+                                    <option value="electronics">Electronics</option>
+                                    <option value="home-garden">Home & Garden</option>
+                                    <option value="health-beauty">Health & Beauty</option>
+                                    <option value="sports">Sports & Outdoors</option>
+                                    <option value="books">Books & Media</option>
+                                    <option value="food-beverage">Food & Beverage</option>
+                                    <option value="handmade">Handmade & Crafts</option>
+                                    <option value="services">Services</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Brand Assets -->
+                    <div class="custom-card">
+                        <h3><i class="fas fa-image"></i> Brand Assets</h3>
+                        <div class="brand-uploads">
+                            <!-- Store Banner -->
+                            <div class="upload-section">
+                                <label>Store Banner (Optional)</label>
+                                <div class="upload-area banner-upload" id="bannerUpload">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>Upload Store Banner</p>
+                                        <span>Recommended: 1200x400px, Max 5MB</span>
+                                    </div>
+                                    <img id="bannerPreview" class="upload-preview" style="display: none;" />
+                                    <input type="file" id="bannerFile" accept="image/*" style="display: none;">
+                                </div>
+                                <button type="button" id="removeBanner" class="remove-btn" style="display: none;">
+                                    <i class="fas fa-trash"></i> Remove Banner
+                                </button>
+                            </div>
+
+                            <!-- Store Logo -->
+                            <div class="upload-section">
+                                <label>Store Logo (Optional)</label>
+                                <div class="upload-area logo-upload" id="logoUpload">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-crown"></i>
+                                        <p>Upload Store Logo</p>
+                                        <span>Recommended: 200x200px, Max 2MB</span>
+                                    </div>
+                                    <img id="logoPreview" class="upload-preview" style="display: none;" />
+                                    <input type="file" id="logoFile" accept="image/*" style="display: none;">
+                                </div>
+                                <button type="button" id="removeLogo" class="remove-btn" style="display: none;">
+                                    <i class="fas fa-trash"></i> Remove Logo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Stores Section -->
+            <div class="existing-stores-section" id="existingStoresSection" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-store"></i> Your Existing Stores</h2>
+                </div>
+                <div id="existingStoresList" class="stores-grid">
+                    <!-- Existing stores will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="products-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-box"></i> Add Products</h2>
+                </div>
+                
+                <div id="productsList" class="products-grid">
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-bag"></i>
+                        <h3>No Products Yet</h3>
+                        <p>Start building your store by adding your first product</p>
+                        <button class="primary-btn" onclick="openProductModal()">
+                            <i class="fas fa-plus"></i> Add Your First Product
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Preview & Generation -->
+            <div class="store-preview-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-eye"></i> Store Preview</h2>
+                    <div class="preview-actions">
+                        <button class="secondary-btn" onclick="previewStore()">
+                            <i class="fas fa-external-link-alt"></i> Preview Store
+                        </button>
+                        <button class="primary-btn" onclick="saveStore()" id="saveStoreBtn" disabled>
+                            <i class="fas fa-save"></i> Save Your Store
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="storePreview" class="store-preview-container">
+                    <div class="preview-placeholder">
+                        <i class="fas fa-store"></i>
+                        <h3>Store Preview</h3>
+                        <p>Add store information and products to see your store preview</p>
+                    </div>
+                </div>
+
+                <!-- Generated Store Link -->
+                <div id="generatedStore" class="generated-store-section" style="display: none;">
+                    <h3><i class="fas fa-check-circle"></i> Your Store is Ready!</h3>
+                    <div class="store-link-container">
+                        <div class="store-link-display">
+                            <label>Your Store URL:</label>
+                            <div class="link-input-group">
+                                <input type="text" id="storeUrl" readonly class="store-url-input">
+                                <button onclick="copyStoreUrl()" class="copy-btn">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="store-qr-section">
+                            <div id="storeQRCode" class="qr-display"></div>
+                            <button onclick="downloadStoreQR()" class="download-btn">
+                                <i class="fas fa-download"></i> Download QR
+                            </button>
+                        </div>
+                    </div>
+                    <div class="share-options">
+                        <button onclick="shareStore('whatsapp')" class="share-btn whatsapp">
+                            <i class="fab fa-whatsapp"></i> Share on WhatsApp
+                        </button>
+                        <button onclick="shareStore('facebook')" class="share-btn facebook">
+                            <i class="fab fa-facebook"></i> Share on Facebook
+                        </button>
+                        <button onclick="shareStore('twitter')" class="share-btn twitter">
+                            <i class="fab fa-twitter"></i> Share on Twitter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Section -->
+        <div class="pricing-section">
+            <h2><i class="fas fa-gem"></i> Pricing Plans</h2>
+            <p class="pricing-subtitle">Choose the perfect plan for your business needs</p>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <div class="plan-header">
+                        <h3>Free</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">0</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <ul class="features">
+                        <li><i class="fas fa-check"></i> Up to 5 products</li>
+                        <li><i class="fas fa-check"></i> Basic store customization</li>
+                        <li><i class="fas fa-check"></i> LinQrius subdomain</li>
+                        <li><i class="fas fa-check"></i> Basic analytics</li>
+                        <li><i class="fas fa-times"></i> Custom domain</li>
+                        <li><i class="fas fa-times"></i> Advanced analytics</li>
+                    </ul>
+                    <button class="plan-btn current">Current Plan</button>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="plan-header">
+                        <h3>Pro</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">4.99</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <ul class="features">
+                        <li><i class="fas fa-check"></i> Up to 50 products</li>
+                        <li><i class="fas fa-check"></i> Custom store design</li>
+                        <li><i class="fas fa-check"></i> Basic analytics</li>
+                        <li><i class="fas fa-check"></i> Email support</li>
+                        <li><i class="fas fa-check"></i> Custom banner & logo</li>
+                        <li><i class="fas fa-times"></i> Custom domain</li>
+                    </ul>
+                    <button class="plan-btn">Coming Soon</button>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <div class="popular-badge">Most Popular</div>
+                    <div class="plan-header">
+                        <h3>Ultra Pro</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">11.99</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <ul class="features">
+                        <li><i class="fas fa-check"></i> Unlimited products</li>
+                        <li><i class="fas fa-check"></i> Full customization</li>
+                        <li><i class="fas fa-check"></i> Custom domain</li>
+                        <li><i class="fas fa-check"></i> Advanced analytics</li>
+                        <li><i class="fas fa-check"></i> Priority support</li>
+                        <li><i class="fas fa-check"></i> Remove LinQrius branding</li>
+                    </ul>
+                    <button class="plan-btn">Coming Soon</button>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="plan-header">
+                        <h3>Enterprise</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">19.99</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <ul class="features">
+                        <li><i class="fas fa-check"></i> Everything in Ultra Pro</li>
+                        <li><i class="fas fa-check"></i> Multiple stores (up to 10)</li>
+                        <li><i class="fas fa-check"></i> API access</li>
+                        <li><i class="fas fa-check"></i> White-label solution</li>
+                        <li><i class="fas fa-check"></i> Dedicated support</li>
+                        <li><i class="fas fa-check"></i> Custom integrations</li>
+                    </ul>
+                    <button class="plan-btn">Coming Soon</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LinQrius</h4>
+                    <p>Create professional digital visiting cards with QR codes. Share your contact information instantly with anyone, anywhere.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="index.html">VCard QR</a></li>
+                        <li><a href="link-shorten.html">Link Shorten</a></li>
+                        <li><a href="cliqart.html">LinQart</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="terms.html">Terms & Conditions</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="sitemap.html">Sitemap</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-envelope"></i> linqrius@gmail.com</p>
+                        <button onclick="openContactForm()" class="contact-btn">
+                            <i class="fas fa-paper-plane"></i> Contact Us
+                        </button>
+                    </div>
+                    <div class="buy-me-coffee">
+                        <a href="https://buymeacoffee.com/spvinodmanb" target="_blank" class="coffee-btn">
+                            <i class="fas fa-coffee"></i> Buy Me a Coffee
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinQrius. All rights reserved.</p>
+            </div>
+        </footer>
+
+        <!-- Add Product Modal -->
+        <div id="productModal" class="modal" style="display: none;">
+            <div class="modal-content large-modal">
+                <span class="close">&times;</span>
+                <h3><i class="fas fa-plus"></i> Add New Product</h3>
+                <form id="productForm" class="product-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Product Name *</label>
+                            <input type="text" id="productName" required placeholder="Enter product name">
+                        </div>
+                        <div class="form-group">
+                            <label for="productUrl">Product URL *</label>
+                            <div class="url-input-group">
+                                <input type="url" id="productUrl" required placeholder="https://example.com/product">
+                                <button type="button" onclick="fetchProductData()" class="fetch-btn">
+                                    <i class="fas fa-download"></i> Fetch
+                                </button>
+                            </div>
+                            <small>Paste a product URL and click "Fetch" to auto-fill details</small>
+                            
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Price (Optional)</label>
+                            <input type="text" id="productPrice" placeholder="e.g., $99.99">
+                        </div>
+                        <div class="form-group">
+                            <label for="productImage">Product Image URL (Optional)</label>
+                            <input type="url" id="productImage" placeholder="https://example.com/image.jpg">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productDescription">Description (Optional)</label>
+                        <textarea id="productDescription" rows="3" placeholder="Brief description of the product"></textarea>
+                    </div>
+                    
+                    <!-- Image Preview Section -->
+                    <div class="image-preview-section" id="imagePreviewSection" style="display: none;">
+                        <label>Product Image Preview</label>
+                        <div class="image-preview-container">
+                            <img id="productImagePreview" alt="Product Preview" class="product-preview-image">
+                            <div class="image-overlay">
+                                <div class="image-dimensions">1080 x 1450px</div>
+                                <button type="button" class="remove-preview-btn" onclick="removeImagePreview()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <small class="preview-help">Preview shows how the image will appear in your store</small>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeProductModal()" class="secondary-btn">Cancel</button>
+                        <button type="submit" class="primary-btn">
+                            <i class="fas fa-plus"></i> Add Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contact Modal -->
+        <div id="contactModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Contact Us</h3>
+                <form id="contactForm" class="contact-form">
+                    <div class="form-group">
+                        <label for="contactName">Name *</label>
+                        <input type="text" id="contactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">Email *</label>
+                        <input type="email" id="contactEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactSubject">Subject *</label>
+                        <input type="text" id="contactSubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">Message *</label>
+                        <textarea id="contactMessage" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Authentication Modal -->
+        <div id="authModal" class="modal" style="display: none;">
+            <div class="modal-content auth-modal">
+                <span class="close">&times;</span>
+                
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-form">
+                    <h3><i class="fas fa-sign-in-alt"></i> Sign In to LinQrius</h3>
+                    <p class="auth-subtitle">Welcome back! Sign in to access your account</p>
+                    <form id="loginFormSubmit">
+                        <div class="form-group">
+                            <label for="loginEmail">Email Address *</label>
+                            <input type="email" id="loginEmail" required placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password *</label>
+                            <input type="password" id="loginPassword" required placeholder="Enter your password">
+                        </div>
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="rememberMe">
+                                <span class="checkmark"></span>
+                                Remember me
+                            </label>
+                            <a href="#" onclick="openForgotPassword()" class="forgot-link">Forgot Password?</a>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Don't have an account? <a href="#" onclick="switchAuth('signup')">Sign Up</a></p>
+                    </div>
+                </div>
+
+                <!-- Signup Form -->
+                <div id="signupForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-user-plus"></i> Create Your LinQrius Account</h3>
+                    <p class="auth-subtitle">Join thousands of users creating professional digital cards</p>
+                    <form id="signupFormSubmit">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="signupFirstName">First Name *</label>
+                                <input type="text" id="signupFirstName" required placeholder="First name">
+                            </div>
+                            <div class="form-group">
+                                <label for="signupLastName">Last Name *</label>
+                                <input type="text" id="signupLastName" required placeholder="Last name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email Address *</label>
+                            <input type="email" id="signupEmail" required placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password *</label>
+                            <input type="password" id="signupPassword" required placeholder="Create a password">
+                            <small>Minimum 8 characters with letters and numbers</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupConfirmPassword">Confirm Password *</label>
+                            <input type="password" id="signupConfirmPassword" required placeholder="Confirm your password">
+                        </div>
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="agreeTerms" required>
+                                <span class="checkmark"></span>
+                                I agree to the <a href="terms.html" target="_blank">Terms & Conditions</a>
+                            </label>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Already have an account? <a href="#" onclick="switchAuth('login')">Sign In</a></p>
+                    </div>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+                    <h3><i class="fas fa-key"></i> Reset Your Password</h3>
+                    <p class="auth-subtitle">Enter your email to receive a password reset link</p>
+                    <form id="forgotPasswordFormSubmit">
+                        <div class="form-group">
+                            <label for="forgotEmail">Email Address *</label>
+                            <input type="email" id="forgotEmail" required placeholder="Enter your email">
+                        </div>
+                        <button type="submit" class="auth-submit-btn">
+                            <i class="fas fa-paper-plane"></i> Send Reset Link
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Remember your password? <a href="#" onclick="switchAuth('login')">Sign In</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="unified-auth.js"></script>
+    <script src="script.js"></script>
+    <script src="cliqart.js"></script>
+</body>
+</html>

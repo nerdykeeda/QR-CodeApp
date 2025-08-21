@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.linqrius.com/sitemap.html
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /profile/
+
+# Allow important pages
+Allow: /index.html
+Allow: /link-shorten.html
+Allow: /cliqart.html
+Allow: /blog.html
+Allow: /privacy.html
+Allow: /terms.html
+
+# Crawl delay (optional)
+Crawl-delay: 1

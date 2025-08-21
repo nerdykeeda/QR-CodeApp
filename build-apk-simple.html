@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius APK Builder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .method {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #FFD700;
+        }
+        .method h3 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .url {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            color: #00ff00;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .link {
+            color: #FFD700;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+        .warning {
+            background: rgba(255,0,0,0.2);
+            border-left: 4px solid #ff4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 LinQrius Android APK Builder</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Make sure your Python server is running on port 8000 before trying these methods!
+        </div>
+
+        <div class="method">
+            <h3>Method 1: PWA Builder (Recommended)</h3>
+            <div class="step">1. Go to <a href="https://www.pwabuilder.com/" target="_blank" class="link">PWA Builder</a></div>
+            <div class="step">2. Enter your app URL:</div>
+            <div class="url">http://192.168.1.54:8000</div>
+            <div class="step">3. Click "Build My PWA"</div>
+            <div class="step">4. Select "Android" platform</div>
+            <div class="step">5. Download your APK</div>
+        </div>
+
+        <div class="method">
+            <h3>Method 2: PWA2APK Online</h3>
+            <div class="step">1. Go to <a href="https://pwa2apk.com/" target="_blank" class="link">PWA2APK</a></div>
+            <div class="step">2. Enter your app URL:</div>
+            <div class="url">http://192.168.1.54:8000</div>
+            <div class="step">3. Fill in app details</div>
+            <div class="step">4. Generate and download APK</div>
+        </div>
+
+        <div class="method">
+            <h3>Method 3: APK Builder XYZ</h3>
+            <div class="step">1. Go to <a href="https://appmaker.xyz/pwa-to-apk" target="_blank" class="link">APK Builder</a></div>
+            <div class="step">2. Enter your app URL:</div>
+            <div class="url">http://192.168.1.54:8000</div>
+            <div class="step">3. Customize app settings</div>
+            <div class="step">4. Build and download APK</div>
+        </div>
+
+        <div class="method">
+            <h3>Method 4: Test Your PWA First</h3>
+            <div class="step">1. Open your phone browser</div>
+            <div class="step">2. Go to:</div>
+            <div class="url">http://192.168.1.54:8000</div>
+            <div class="step">3. Tap "Add to Home Screen" if prompted</div>
+            <div class="step">4. Test all features before building APK</div>
+        </div>
+
+        <div class="warning">
+            <strong>📱 Testing on Phone:</strong><br>
+            Make sure your phone is on the same WiFi network as your computer, then visit the URL above in your phone's browser!
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Management - LinQrius</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .api-key-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .api-key-display {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        
+        .permission-tag {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        
+        .test-section {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .response-box {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-content">
+            <h1>🔑 API Key Management</h1>
+            <p>Manage and test your LinQrius API keys</p>
+        </div>
+
+        <div class="api-key-section">
+            <h2>📋 Available API Keys</h2>
+            <div id="apiKeysList">
+                <p>Loading API keys...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Test API Endpoints</h2>
+            
+            <div class="form-group">
+                <label for="testApiKey">Select API Key:</label>
+                <select id="testApiKey" class="form-control">
+                    <option value="">Choose an API key...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="testEndpoint">Test Endpoint:</label>
+                <select id="testEndpoint" class="form-control">
+                    <option value="health">Health Check (No auth required)</option>
+                    <option value="create-link">Create Link</option>
+                    <option value="get-links">Get All Links</option>
+                    <option value="delete-link">Delete Link</option>
+                    <option value="api-keys">View API Keys (Admin only)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="testUrl">Test URL (for link creation):</label>
+                <input type="url" id="testUrl" class="form-control" placeholder="https://example.com" value="https://example.com/test">
+            </div>
+
+            <button onclick="testEndpoint()" class="btn btn-primary">🧪 Test Endpoint</button>
+
+            <div class="response-box" id="testResponse" style="display: none;">
+                <strong>Response:</strong>
+                <div id="responseContent"></div>
+            </div>
+        </div>
+
+        <div class="api-key-section">
+            <h2>📚 API Documentation</h2>
+            <div class="endpoint-doc">
+                <h3>🔗 Create Short Link</h3>
+                <p><strong>Endpoint:</strong> <code>POST /api/links</code></p>
+                <p><strong>Headers:</strong> <code>X-API-Key: your-api-key</code></p>
+                <p><strong>Body:</strong> <code>{"originalUrl": "https://example.com", "customAlias": "optional"}</code></p>
+            </div>
+
+            <div class="endpoint-doc">
+                <h3>📋 Get All Links</h3>
+                <p><strong>Endpoint:</strong> <code>GET /api/links</code></p>
+                <p><strong>Headers:</strong> <code>X-API-Key: your-api-key</code></p>
+            </div>
+
+            <div class="endpoint-doc">
+                <h3>🗑️ Delete Link</h3>
+                <p><strong>Endpoint:</strong> <code>DELETE /api/links/:id</code></p>
+                <p><strong>Headers:</strong> <code>X-API-Key: your-api-key</code></p>
+            </div>
+
+            <div class="endpoint-doc">
+                <h3>🔑 View API Keys (Admin Only)</h3>
+                <p><strong>Endpoint:</strong> <code>GET /api/keys</code></p>
+                <p><strong>Headers:</strong> <code>X-API-Key: admin-api-key</code></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="/" class="btn btn-secondary">← Back to LinQrius</a>
+        </div>
+    </div>
+
+    <script>
+        // Load API keys on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadApiKeys();
+            populateTestSelect();
+        });
+
+        async function loadApiKeys() {
+            try {
+                const response = await fetch('/api/keys', {
+                    headers: {
+                        'X-API-Key': 'sk-linqrius-admin-2024-67890'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayApiKeys(data.keys);
+                } else {
+                    document.getElementById('apiKeysList').innerHTML = '<p>❌ Error loading API keys. Make sure you have admin access.</p>';
+                }
+            } catch (error) {
+                document.getElementById('apiKeysList').innerHTML = '<p>❌ Network error: ' + error.message + '</p>';
+            }
+        }
+
+        function displayApiKeys(keys) {
+            const container = document.getElementById('apiKeysList');
+            container.innerHTML = keys.map(key => `
+                <div class="api-key-display">
+                    <h4>${key.name}</h4>
+                    <p><strong>Key:</strong> ${key.key}</p>
+                    <p><strong>Permissions:</strong> ${key.permissions}</p>
+                </div>
+            `).join('');
+        }
+
+        function populateTestSelect() {
+            const select = document.getElementById('testApiKey');
+            const keys = [
+                { name: 'Main Key', value: 'sk-linqrius-2024-secure-key-12345' },
+                { name: 'Admin Key', value: 'sk-linqrius-admin-2024-67890' },
+                { name: 'Test Key', value: 'sk-linqrius-test-2024-abcde' }
+            ];
+            
+            keys.forEach(key => {
+                const option = document.createElement('option');
+                option.value = key.value;
+                option.textContent = key.name;
+                select.appendChild(option);
+            });
+        }
+
+        async function testEndpoint() {
+            const apiKey = document.getElementById('testApiKey').value;
+            const endpoint = document.getElementById('testEndpoint').value;
+            const testUrl = document.getElementById('testUrl').value;
+            
+            if (!apiKey && endpoint !== 'health') {
+                alert('Please select an API key for authenticated endpoints');
+                return;
+            }
+
+            const responseBox = document.getElementById('testResponse');
+            const responseContent = document.getElementById('responseContent');
+            
+            responseBox.style.display = 'block';
+            responseContent.textContent = 'Testing...';
+
+            try {
+                let response;
+                let result;
+
+                switch (endpoint) {
+                    case 'health':
+                        response = await fetch('/health');
+                        result = await response.json();
+                        break;
+                        
+                    case 'create-link':
+                        response = await fetch('/api/links', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-API-Key': apiKey
+                            },
+                            body: JSON.stringify({ originalUrl: testUrl })
+                        });
+                        result = await response.json();
+                        break;
+                        
+                    case 'get-links':
+                        response = await fetch('/api/links', {
+                            headers: {
+                                'X-API-Key': apiKey
+                            }
+                        });
+                        result = await response.json();
+                        break;
+                        
+                    case 'delete-link':
+                        // First create a link, then delete it
+                        const createResponse = await fetch('/api/links', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-API-Key': apiKey
+                            },
+                            body: JSON.stringify({ originalUrl: testUrl })
+                        });
+                        const createdLink = await createResponse.json();
+                        
+                        const deleteResponse = await fetch(`/api/links/${createdLink.id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-API-Key': apiKey
+                            }
+                        });
+                        result = await deleteResponse.json();
+                        break;
+                        
+                    case 'api-keys':
+                        response = await fetch('/api/keys', {
+                            headers: {
+                                'X-API-Key': apiKey
+                            }
+                        });
+                        result = await response.json();
+                        break;
+                }
+
+                responseContent.textContent = JSON.stringify(result, null, 2);
+                
+            } catch (error) {
+                responseContent.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

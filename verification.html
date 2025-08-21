@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - LinQrius</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .verification-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .verification-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .verification-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .verification-title {
+            color: #1f2937;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .verification-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .verification-status {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-text {
+            color: #6b7280;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .verification-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .verification-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .verification-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .countdown-text {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        .countdown-number {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .success-icon {
+            color: #10b981;
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .error-icon {
+            color: #ef4444;
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .redirect-button {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 16px;
+        }
+
+        .redirect-button:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div id="verificationContent">
+            <div class="verification-icon">✅</div>
+            <h1 class="verification-title">Email Verification</h1>
+            <p class="verification-subtitle">We're verifying your email address...</p>
+            
+            <div class="verification-status">
+                <div class="loading-spinner"></div>
+                <p class="status-text">Verifying your email...</p>
+            </div>
+            
+            <button id="verificationButton" class="verification-button" onclick="completeVerification()">
+                Complete Verification
+            </button>
+            
+            <p class="countdown-text">
+                This page will automatically redirect in <span id="countdown" class="countdown-number">5</span> seconds
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let countdown = 5;
+        let countdownTimer;
+        let isVerifying = true;
+        let isPasswordReset = false;
+
+        // Check URL parameters
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            const email = urlParams.get('email');
+            const verified = urlParams.get('verified');
+            const token = urlParams.get('token');
+            const type = urlParams.get('type');
+            
+            console.log('URL Parameters detected:', { action, email, verified, token, type });
+            
+            // If this is a password reset
+            if (action === 'reset' && email) {
+                isPasswordReset = true;
+                showPasswordResetContent(email);
+                return;
+            }
+            
+            // If this is any kind of verification (including Supabase redirects)
+            if (verified || token || type || action === 'verify') {
+                console.log('Verification detected, starting countdown...');
+                startCountdown();
+                return;
+            }
+            
+            // Default: show verification content anyway
+            console.log('No specific parameters, showing default verification...');
+            startCountdown();
+        }
+
+        // Show password reset content
+        function showPasswordResetContent(email) {
+            const content = document.getElementById('verificationContent');
+            content.innerHTML = `
+                <div class="verification-icon">🔐</div>
+                <h1 class="verification-title">Password Reset</h1>
+                <p class="verification-subtitle">You can now reset your password for: <strong>${email}</strong></p>
+                
+                <a href="link-shorten.html" class="verification-button">
+                    Reset Password
+                </a>
+                
+                <a href="link-shorten.html" class="redirect-button">
+                    Go to App
+                </a>
+            `;
+            
+            // Auto-redirect after 5 seconds
+            setTimeout(() => {
+                window.location.href = 'link-shorten.html';
+            }, 5000);
+        }
+
+        // Start countdown
+        function startCountdown() {
+            if (isPasswordReset) return; // Don't start countdown for password reset
+            
+            console.log('Starting verification countdown...');
+            countdownTimer = setInterval(() => {
+                countdown--;
+                const countdownElement = document.getElementById('countdown');
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownTimer);
+                    completeVerification();
+                }
+            }, 1000);
+        }
+
+        // Complete verification
+        function completeVerification() {
+            if (!isVerifying || isPasswordReset) return;
+            isVerifying = false;
+            
+            console.log('Completing verification...');
+            clearInterval(countdownTimer);
+            
+            // Show success state
+            const content = document.getElementById('verificationContent');
+            content.innerHTML = `
+                <div class="success-icon">✅</div>
+                <h1 class="verification-title">Email Verified!</h1>
+                <p class="verification-subtitle">Your email has been successfully verified. You can now sign in to your account.</p>
+                
+                <a href="link-shorten.html" class="verification-button">
+                    Go to LinQrius
+                </a>
+                
+                <a href="link-shorten.html" class="redirect-button">
+                    Continue to App
+                </a>
+            `;
+            
+            // Auto-redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = 'link-shorten.html';
+            }, 3000);
+        }
+
+        // Start when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Verification page loaded, checking parameters...');
+            checkUrlParams();
+        });
+    </script>
+</body>
+</html>

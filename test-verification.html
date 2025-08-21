@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Verification - LinQrius</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .url-info {
+            background: #f0f8ff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .param {
+            margin: 10px 0;
+            padding: 5px;
+            background: #e8f4fd;
+            border-radius: 3px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verification Debug Page</h1>
+        <p>This page will show you exactly what parameters Supabase sends when you click verification links.</p>
+        
+        <div class="url-info">
+            <h3>Current URL:</h3>
+            <div id="currentUrl" class="param"></div>
+            
+            <h3>URL Parameters:</h3>
+            <div id="urlParams"></div>
+            
+            <h3>All URL Data:</h3>
+            <div id="allData"></div>
+        </div>
+        
+        <h3>Test Links:</h3>
+        <p>Try these test URLs to see what happens:</p>
+        <button class="test-button" onclick="testUrl('verification.html')">Test: verification.html</button>
+        <button class="test-button" onclick="testUrl('verification.html?verified=true')">Test: ?verified=true</button>
+        <button class="test-button" onclick="testUrl('verification.html?action=reset&email=test@example.com')">Test: Password Reset</button>
+        
+        <h3>What to do:</h3>
+        <ol>
+            <li>Sign up with a new email in your main app</li>
+            <li>Check your inbox for the verification email</li>
+            <li>Click the verification link</li>
+            <li>Look at this page to see what parameters are detected</li>
+            <li>Tell me what you see!</li>
+        </ol>
+    </div>
+
+    <script>
+        function displayUrlInfo() {
+            const currentUrl = window.location.href;
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Display current URL
+            document.getElementById('currentUrl').textContent = currentUrl;
+            
+            // Display URL parameters
+            let paramsHtml = '';
+            for (let [key, value] of urlParams.entries()) {
+                paramsHtml += `<div class="param"><strong>${key}:</strong> ${value}</div>`;
+            }
+            if (paramsHtml === '') {
+                paramsHtml = '<div class="param">No parameters found</div>';
+            }
+            document.getElementById('urlParams').innerHTML = paramsHtml;
+            
+            // Display all data
+            const allData = {
+                href: window.location.href,
+                origin: window.location.origin,
+                pathname: window.location.pathname,
+                search: window.location.search,
+                hash: window.location.hash,
+                params: Object.fromEntries(urlParams.entries())
+            };
+            document.getElementById('allData').innerHTML = `<pre>${JSON.stringify(allData, null, 2)}</pre>`;
+        }
+        
+        function testUrl(url) {
+            window.location.href = url;
+        }
+        
+        // Display info when page loads
+        document.addEventListener('DOMContentLoaded', displayUrlInfo);
+        
+        // Also display when URL changes (for testing)
+        window.addEventListener('popstate', displayUrlInfo);
+    </script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinQrius - Link Shortener</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.linqrius.com/link-shorten.html">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Create short, trackable links instantly with LinQrius Link Shortener. Convert long URLs into manageable links with analytics and QR code generation.">
+    <meta name="keywords" content="link shortener, URL shortener, short links, trackable links, QR code links, link analytics">
+    <meta name="author" content="LinQrius">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="LinQrius - Link Shortener">
+    <meta property="og:description" content="Create short, trackable links instantly with LinQrius Link Shortener. Convert long URLs into manageable links with analytics and QR code generation.">
+    <meta property="og:url" content="https://www.linqrius.com/link-shorten.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LinQrius">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LinQrius - Link Shortener">
+    <meta name="twitter:description" content="Create short, trackable links instantly with LinQrius Link Shortener. Convert long URLs into manageable links with analytics and QR code generation.">
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css?v=1.0.1">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    
+    <!-- Font Awesome with async loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    
+    <!-- QRCode library with async loading -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-link"></i> Link Shortener</h1>
+                    <p>Create short, trackable links instantly</p>
+                </div>
+                <nav class="nav-menu">
+                    <ul>
+                        <li><a href="/"><i class="fas fa-qrcode"></i> VCard QR</a></li>
+                        <li><a href="/link-shorten" class="active"><i class="fas fa-link"></i> Link Shortener</a></li>
+                        <li><a href="/cliqart"><i class="fas fa-store"></i> LinQart</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="authButtons">
+                    <button class="auth-btn login-btn" onclick="openAuthModal('login')">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                    <button class="auth-btn signup-btn" onclick="openAuthModal('signup')">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
+                </div>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-info">
+                        <span class="user-name" id="userName">User</span>
+                        <div class="user-dropdown">
+                            <button class="dropdown-btn" onclick="toggleUserDropdown()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                                <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Link Shortener Section -->
+            <div class="link-shortener-section">
+                <div class="shortener-card">
+                    <h2><i class="fas fa-link"></i> Shorten Your Link</h2>
+                    <p>Convert long URLs into short, manageable links with analytics</p>
+                    
+                    <form id="linkShortenerForm" class="shortener-form">
+                        <div class="form-group">
+                            <label for="originalUrl">Enter your long URL *</label>
+                            <input type="url" id="originalUrl" required 
+                                   placeholder="https://example.com/very-long-url-that-needs-shortening">
+                        </div>
+                        
+                        <button type="submit" class="shortener-btn">
+                            <i class="fas fa-magic"></i> Shorten Link
+                        </button>
+                    </form>
+                    
+                    <!-- Progress bar for link shortening -->
+                    <div id="progressBar" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p class="progress-text">Processing your link...</p>
+                    </div>
+                    
+                    <!-- Message display -->
+                    <div id="message" class="message" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="resultSection" class="result-section" style="display: none;">
+                <div class="result-card">
+                    <h3><i class="fas fa-check-circle"></i> Link Shortened Successfully!</h3>
+                    
+                    <div class="shortened-link">
+                        <div class="link-display">
+                            <input type="text" id="shortenedUrl" readonly>
+                            <button onclick="linkShortener.copyToClipboard()" class="copy-btn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <div class="clickable-link" id="clickableLink" style="display: none;">
+                            <p>Test your link: <a href="#" id="testLink" target="_blank" class="test-link">Click here to test</a></p>
+                        </div>
+                    </div>
+
+                    <div class="link-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-eye"></i>
+                            <span>Clicks: <strong id="clickCount">0</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Created: <strong id="createdDate">-</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="link-actions">
+                        <button onclick="showComingSoon('QR Code Generation')" class="action-btn">
+                            <i class="fas fa-qrcode"></i> Generate QR Code
+                        </button>
+                        <button onclick="linkShortener.shareLink()" class="action-btn">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                        <button onclick="linkShortener.viewAnalytics()" class="action-btn">
+                            <i class="fas fa-chart-line"></i> Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Links Section -->
+            <div class="recent-links-section">
+                <h3><i class="fas fa-history"></i> Recent Links</h3>
+                <div id="recentLinks" class="recent-links-grid">
+                    <div class="no-links">
+                        <i class="fas fa-link"></i>
+                        <p>No links created yet</p>
+                        <small>Start by shortening your first link above</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>LinQrius</h4>
+                    <p>Create professional digital visiting cards with QR codes. Share your contact information instantly with anyone, anywhere.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">VCard Generator</a></li>
+                        <li><a href="/link-shorten">Link Shortener</a></li>
+                        <li><a href="/cliqart">LinQart Store</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinQrius. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        
+        <!-- Email Input Form -->
+        <div id="emailForm" class="auth-form">
+          <h3>Welcome to LinQrius</h3>
+          <p class="auth-subtitle">Enter your email to get started</p>
+                          <form id="signupFormSubmit">
+            <div class="form-group">
+              <label for="emailAddress">Email Address</label>
+              <input type="email" id="emailAddress" required placeholder="Enter your email address">
+            </div>
+            <button type="submit" class="auth-submit-btn">
+              <i class="fas fa-paper-plane"></i> Send Verification Link
+            </button>
+          </form>
+        </div>
+
+        <!-- Email Sent Confirmation -->
+        <div id="emailSentForm" class="auth-form" style="display: none;">
+          <h3>Check Your Email</h3>
+          <p class="auth-subtitle">We've sent a verification link to <span id="emailDisplay"></span></p>
+          <div class="email-sent-info">
+            <i class="fas fa-envelope-open"></i>
+            <p>Click the link in your email to verify your account</p>
+            <small>Didn't receive the email? Check your spam folder</small>
+          </div>
+          <div class="email-actions">
+            <button onclick="resendVerificationEmail()" class="action-btn">
+              <i class="fas fa-redo"></i> Resend Email
+            </button>
+            <button onclick="switchAuth('login')" class="action-btn secondary">
+              <i class="fas fa-sign-in-alt"></i> Back to Sign In
+            </button>
+          </div>
+        </div>
+
+        <!-- Password Creation Form -->
+        <div id="passwordForm" class="auth-form" style="display: none;">
+          <h3>Create Your Password</h3>
+          <p class="auth-subtitle">Set a secure password for your account</p>
+                          <form id="signupFormSubmit">
+            <div class="form-group">
+              <label for="newPassword">Password</label>
+              <input type="password" id="newPassword" required minlength="8" placeholder="Minimum 8 characters">
+              <div class="password-strength" id="passwordStrength"></div>
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" required placeholder="Confirm your password">
+            </div>
+            <button type="submit" class="auth-submit-btn">
+              <i class="fas fa-user-plus"></i> Create Account
+            </button>
+          </form>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="auth-form" style="display: none;">
+          <h3>Welcome Back</h3>
+          <p class="auth-subtitle">Sign in to your LinQrius account</p>
+                          <form id="loginFormSubmit">
+            <div class="form-group">
+              <label for="loginEmail">Email Address</label>
+              <input type="email" id="loginEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" required placeholder="Enter your password">
+            </div>
+            <div class="form-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="rememberMe">
+                <span class="checkmark"></span> Remember me
+              </label>
+              <a href="#" class="forgot-link" onclick="openForgotPassword()">Forgot password?</a>
+            </div>
+            <button type="submit" class="auth-submit-btn">
+              <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+          </form>
+          <div class="auth-switch">
+            Don't have an account? <a href="#" onclick="switchAuth('signup')">Sign up</a>
+          </div>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div id="signupForm" class="auth-form" style="display: none;">
+          <h3><i class="fas fa-user-plus"></i> Create Your LinQrius Account</h3>
+          <p class="auth-subtitle">Join thousands of users creating professional digital cards</p>
+          <form id="signupFormSubmit">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="signupFirstName">First Name *</label>
+                <input type="text" id="signupFirstName" required placeholder="First name">
+              </div>
+              <div class="form-group">
+                <label for="signupLastName">Last Name *</label>
+                <input type="text" id="signupLastName" required placeholder="Last name">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="signupEmail">Email Address *</label>
+              <input type="email" id="signupEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+              <label for="signupPassword">Password *</label>
+              <input type="password" id="signupPassword" required placeholder="Create a password">
+              <small>Minimum 8 characters with letters and numbers</small>
+            </div>
+            <div class="form-group">
+              <label for="signupConfirmPassword">Confirm Password *</label>
+              <input type="password" id="signupConfirmPassword" required placeholder="Confirm your password">
+            </div>
+            <div class="form-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="agreeTerms" required>
+                <span class="checkmark"></span>
+                I agree to the <a href="terms.html" target="_blank">Terms & Conditions</a>
+              </label>
+            </div>
+            <button type="submit" class="auth-submit-btn">
+              <i class="fas fa-user-plus"></i> Create Account
+            </button>
+          </form>
+          <div class="auth-switch">
+            Already have an account? <a href="#" onclick="switchAuth('login')">Sign In</a>
+          </div>
+        </div>
+
+        <!-- Forgot Password Form -->
+        <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+          <h3><i class="fas fa-key"></i> Reset Your Password</h3>
+          <p class="auth-subtitle">Enter your email to receive a password reset link</p>
+          <form id="forgotPasswordFormSubmit">
+            <div class="form-group">
+              <label for="forgotEmail">Email Address *</label>
+              <input type="email" id="forgotEmail" required placeholder="Enter your email">
+            </div>
+            <button type="submit" class="auth-submit-btn">
+              <i class="fas fa-paper-plane"></i> Send Reset Link
+            </button>
+          </form>
+          <div class="auth-switch">
+            Remember your password? <a href="#" onclick="switchAuth('login')">Sign In</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // Authentication is now handled by unified-auth.js
+        // All auth functions are centralized in the UnifiedAuthSystem class
+
+        // Check for verification requests first
+        function checkVerificationRoute() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const verified = urlParams.get('verified');
+            const action = urlParams.get('action');
+            const email = urlParams.get('email');
+            
+            console.log('Checking verification route:', { verified, action, email });
+            
+            // If this is a verification request, redirect to verification page
+            if (verified || action === 'verify' || action === 'reset') {
+                console.log('✅ Verification request detected, redirecting to verification page...');
+                const redirectUrl = `verification.html?${window.location.search}`;
+                console.log('Redirecting to:', redirectUrl);
+                window.location.href = redirectUrl;
+                return true; // Stop further execution
+            }
+            
+            console.log('✅ No verification request, continuing with normal app...');
+            return false; // Continue with normal app
+        }
+        
+        // Check verification route before initializing app
+        if (checkVerificationRoute()) {
+            // Don't continue with app initialization
+            console.log('🔄 Redirecting to verification page...');
+        } else {
+                    // Initialize the app normally
+        console.log('🚀 Initializing LinQrius app...');
+        initializeApp();
+    }
+    
+    function initializeApp() {
+        console.log('🔧 Setting up LinQrius app...');
+        
+        // Test auth buttons functionality
+        console.log('🔐 Testing auth buttons...');
+        const authButtons = document.getElementById('authButtons');
+        if (authButtons) {
+            console.log('✅ Auth buttons found:', authButtons);
+            const loginBtn = authButtons.querySelector('.login-btn');
+            const signupBtn = authButtons.querySelector('.signup-btn');
+            console.log('Login button:', loginBtn);
+            console.log('Signup button:', signupBtn);
+            
+            // Test click handlers
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    console.log('🔐 Login button clicked!');
+                    openAuthModal('login');
+                });
+            }
+            if (signupBtn) {
+                signupBtn.addEventListener('click', () => {
+                    console.log('🔐 Signup button clicked!');
+                    openAuthModal('signup');
+                });
+            }
+        } else {
+            console.log('❌ Auth buttons not found');
+        }
+        
+        // Initialize link shortener
+        if (typeof initializeLinkShortener === 'function') {
+            console.log('📎 Initializing link shortener...');
+            initializeLinkShortener();
+        } else {
+            console.log('⚠️ initializeLinkShortener function not found');
+        }
+        
+        // Initialize QR generator
+        if (typeof initializeQRGenerator === 'function') {
+            console.log('🔲 Initializing QR generator...');
+            initializeQRGenerator();
+        } else {
+            console.log('⚠️ initializeQRGenerator function not found');
+        }
+        
+        console.log('✅ LinQrius app initialization complete!');
+    }
+    </script>
+    <script src="link-shortener.js?v=1.0.1"></script>
+    <script src="qr-generator.js?v=1.0.1"></script>
+    <script src="unified-auth.js?v=1.0.1"></script>
+</body>
+</html>
